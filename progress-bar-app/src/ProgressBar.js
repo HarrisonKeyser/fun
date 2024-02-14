@@ -11,14 +11,14 @@ function ProgressBar() {
 
   // Array of note file paths
   const notes = [
-    '/notes/1LowC.mp3',
-    '/notes/2D.mp3',
-    '/notes/3E.mp3',
-    '/notes/4F.mp3',
-    '/notes/5G.mp3',
-    '/notes/6A.mp3',
-    '/notes/7B.mp3',
-    '/notes/8HighC.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/1LowC.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/2D.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/3E.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/4F.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/5G.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/6A.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/7B.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/8HighC.mp3',
   ];
 
   const fillProgressBar = () => {
@@ -67,7 +67,7 @@ function ProgressBar() {
 
   // Function to play the celebration sound
   const playCelebrationSound = () => {
-    const audio = new Audio('/confetti.mp3');
+    const audio = new Audio('https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/confetticropped.mp3');
     audio.play();
   };
 

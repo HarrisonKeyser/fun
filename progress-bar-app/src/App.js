@@ -1,15 +1,19 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
-import ProgressBar from './ProgressBar'; // Import your progress bar component
+import ProgressBarPage from './ProgressBarPage';
+import Baseball from './Baseball';
+import Homepage from './Homepage'
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>Click!!!!</p>
-        <ProgressBar /> {/* Use your ProgressBar component */}
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/progress-bar" element={<ProgressBarPage />} />
+        <Route path="/stats" element={<Baseball />} />
+      </Routes>
+    </Router>
   );
 }
 
