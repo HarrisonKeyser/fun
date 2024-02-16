@@ -1,5 +1,6 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import FadeTransitionWrapper from './FadeTransitionWrapper';
 import './App.css';
 import ProgressBarPage from './ProgressBarPage';
 import Baseball from './Baseball';
@@ -9,9 +10,9 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/progress-bar" element={<ProgressBarPage />} />
-        <Route path="/stats" element={<Baseball />} />
+        <Route path="/" element={<FadeTransitionWrapper><Homepage /></FadeTransitionWrapper>} />
+        <Route path="/progress-bar" element={<FadeTransitionWrapper><ProgressBarPage /></FadeTransitionWrapper>} />
+        <Route path="/stats" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
       </Routes>
     </Router>
   );
