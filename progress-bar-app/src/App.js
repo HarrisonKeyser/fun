@@ -12,7 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<FadeTransitionWrapper><Homepage /></FadeTransitionWrapper>} />
         <Route path="/progress-bar" element={<FadeTransitionWrapper><ProgressBarPage /></FadeTransitionWrapper>} />
-        <Route path="/stats" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
+        <Route path="/baseball" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
       </Routes>
     </Router>
   );
