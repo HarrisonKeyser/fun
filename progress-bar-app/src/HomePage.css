@@ -1,0 +1,23 @@
+.nav-container {
+    list-style: none;
+    padding: 0;
+    display: flex; /* Use flexbox to create columns */
+    justify-content: space-around; /* Evenly space the nav items */
+  }
+  
+  .nav-item {
+    flex: 1; /* Each item takes equal width */
+    text-align: center; /* Center the content */
+  }
+  
+  .nav-item img {
+    width: 400px; /* Control the image size */
+    height: auto; /* Maintain aspect ratio */
+  }
+  
+  /* Optional: Remove padding/margin from <ul> if you keep it */
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+  

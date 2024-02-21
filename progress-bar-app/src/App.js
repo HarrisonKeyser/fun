@@ -4,13 +4,13 @@ import FadeTransitionWrapper from './FadeTransitionWrapper';
 import './App.css';
 import ProgressBarPage from './ProgressBarPage';
 import Baseball from './Baseball';
-import Homepage from './Homepage'
+import HomePage from './HomePage'
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<FadeTransitionWrapper><Homepage /></FadeTransitionWrapper>} />
+        <Route path="/" element={<FadeTransitionWrapper><HomePage /></FadeTransitionWrapper>} />
         <Route path="/progress-bar" element={<FadeTransitionWrapper><ProgressBarPage /></FadeTransitionWrapper>} />
         <Route path="/baseball" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
       </Routes>
