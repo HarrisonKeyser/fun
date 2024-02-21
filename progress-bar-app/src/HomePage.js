@@ -9,11 +9,13 @@ function HomePage() {
         <nav className="nav-container">
           <div className="nav-item">
             <Link to="/progress-bar">
-              <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/ClickThumbnail.png" alt="Progress Bar App" />
+              <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/ClickThumbnail.png" alt="Click!" />
             </Link>
           </div>
           <div className="nav-item">
-            <Link to="/baseball">Statistics Explanation</Link>
+            <Link to="/baseball">
+              <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/BaseballThumbnailv1.png" alt="Predicting Baseball Home Runs" />
+            </Link>
           </div>
         </nav>
       </header>

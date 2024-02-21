@@ -8,6 +8,7 @@
   .nav-item {
     flex: 1; /* Each item takes equal width */
     text-align: center; /* Center the content */
+    margin: 0 20px; /* Add 20px margin to the left and right of each item */
   }
   
   .nav-item img {
