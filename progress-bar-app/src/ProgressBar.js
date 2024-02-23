@@ -4,6 +4,8 @@ import Confetti from 'react-confetti';
 function ProgressBar() {
   const [progress, setProgress] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [setConfettiWidth] = useState(window.innerWidth);
+  const [setConfettiHeight] = useState(window.innerHeight);
   const [showResetButton, setShowResetButton] = useState(false);
   const [clicksToFill, setClicksToFill] = useState(10);
   const [clickCount, setClickCount] = useState(0); // Track clicks to determine which note to play
@@ -11,14 +13,14 @@ function ProgressBar() {
 
   // Array of note file paths
   const notes = [
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/1LowC.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/2D.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/3E.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/4F.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/5G.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/6A.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/7B.mp3',
-    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/8HighC.mp3',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/1LowC.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/2D.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/3E.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/4F.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/5G.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/6A.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/7B.wav',
+    'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/8HighC.wav',
   ];
 
   const fillProgressBar = () => {
@@ -31,6 +33,11 @@ function ProgressBar() {
       if (newProgress >= 100 || Math.round(newProgress) === 100) {
         newProgress = 100;
         setShowConfetti(true);
+        const resizeListener = () => {
+          setConfettiWidth(window.innerWidth);
+          setConfettiHeight(window.innerHeight);
+        };
+        window.addEventListener('resize', resizeListener);
         setTimeout(() => {
           setShowConfetti(false);
           setShowResetButton(true);
