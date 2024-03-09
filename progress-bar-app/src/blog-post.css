@@ -22,3 +22,21 @@
     padding: 2px 4px;
     font-family: 'Courier New', monospace;
   }
+
+  .formula-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  
+  .formula {
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
+  .formula sup {
+    font-size: 12px;
+  }
