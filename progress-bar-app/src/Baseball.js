@@ -114,7 +114,25 @@ function Baseball() {
             Let's move on to building our predictive model and see how we can leverage the power of the Poisson distribution to forecast home run counts accurately.
           </p>
 
-          <h2>III. Building a Predictive Model</h2>
+          <h2>III. Building a Predictive model</h2>
+
+          <p>
+            Let's examine our data.
+          </p>
+
+          <h2>IV. Overfitting and Model Validation</h2>
+
+          <p>
+            While building an accurate predictive model is crucial, it's equally important to ensure that our model generalizes well to new, unseen data. If our model is overly complex and tailored too closely to the training data, it may fail to capture the underlying patterns and perform poorly on new observations – a phenomenon known as overfitting.
+          </p>
+
+          <p>
+            Overfitting can occur when a model learns the noise or random fluctuations in the training data instead of the true underlying relationships. This can lead to models that appear to perform exceptionally well on the training data but fail to generalize to new data, rendering them ineffective in real-world applications.
+          </p>
+
+          <p>
+            To avoid overfitting and ensure our Poisson regression model for predicting home runs is reliable, we can employ a technique called cross-validation. Cross-validation involves partitioning the dataset into multiple subsets, training the model on one subset (the training set), and evaluating its performance on another subset (the validation set). This process is repeated multiple times, with different subsets used for training and validation in each iteration.
+          </p>
         </div>
       </header>
     </div>
