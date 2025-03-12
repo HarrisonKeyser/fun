@@ -22,3 +22,32 @@
     padding: 0;
   }
   
+  .site-footer {
+    background-color: #ecf1fb;
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+    padding: 20px 10px;
+  }
+
+  .section-title {
+    text-align: center;
+    font-size: 24px;
+    margin: 40px 0 20px 0;
+    color: #333;
+  }
+  
+  .nav-placeholder {
+    display: inline-block;
+    width: 400px;
+    height: 225px;
+    background-color: #f0f0f0;
+    border-radius: 12px;
+    line-height: 225px;
+    text-align: center;
+    font-size: 20px;
+    color: #333;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  

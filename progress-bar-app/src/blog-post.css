@@ -40,3 +40,19 @@
   .formula sup {
     font-size: 12px;
   }
+
+  .video-container {
+    margin: 20px auto;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .transcript {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: left;
+    padding: 20px;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  

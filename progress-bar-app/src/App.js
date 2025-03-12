@@ -4,7 +4,9 @@ import FadeTransitionWrapper from './FadeTransitionWrapper';
 import './App.css';
 import ProgressBarPage from './ProgressBarPage';
 import Baseball from './Baseball';
-import HomePage from './HomePage'
+import HomePage from './HomePage';
+import Yahtzee from './Yahtzee';
+
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
         <Route path="/" element={<FadeTransitionWrapper><HomePage /></FadeTransitionWrapper>} />
         <Route path="/progress-bar" element={<FadeTransitionWrapper><ProgressBarPage /></FadeTransitionWrapper>} />
         <Route path="/baseball" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
+        <Route path="/yahtzee" element={<FadeTransitionWrapper><Yahtzee /></FadeTransitionWrapper>} />
+
       </Routes>
     </Router>
   );
