@@ -6,7 +6,7 @@ import ProgressBarPage from './ProgressBarPage';
 import Baseball from './Baseball';
 import HomePage from './HomePage';
 import Yahtzee from './Yahtzee';
-
+import Senet from './Senet';
 
 function App() {
   return (
@@ -16,7 +16,7 @@ function App() {
         <Route path="/progress-bar" element={<FadeTransitionWrapper><ProgressBarPage /></FadeTransitionWrapper>} />
         <Route path="/baseball" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
         <Route path="/yahtzee" element={<FadeTransitionWrapper><Yahtzee /></FadeTransitionWrapper>} />
-
+        <Route path="/senet" element={<FadeTransitionWrapper><Senet /></FadeTransitionWrapper>} />
       </Routes>
     </Router>
   );

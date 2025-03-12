@@ -20,6 +20,11 @@ function HomePage() {
                 <div className="nav-placeholder">Fish Random</div>
               </Link>
             </div>
+            <div className="nav-item">
+              <Link to="/senet">
+                <div className="nav-placeholder">Egyptian Senet</div>
+              </Link>
+            </div>
           </div>
         </section>
 

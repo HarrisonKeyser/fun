@@ -1,0 +1,85 @@
+.intro-text {
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    text-align: center;
+    font-size: 18px;
+    line-height: 1.6;
+  }
+  
+  .rules-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: left;
+    font-size: 16px;
+  }
+  
+  .rules-section ul {
+    padding-left: 20px;
+  }
+  
+  .board-placeholder {
+    margin-top: 40px;
+    text-align: center;
+    font-style: italic;
+    color: #777;
+  }
+  
+  .senet-board {
+    display: grid;
+    grid-template-columns: repeat(10, 60px);
+    grid-template-rows: repeat(3, 60px);
+    gap: 5px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  
+  .senet-square {
+    background-color: #f2e8c9;
+    border: 1px solid #aa926f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    width: 60px;
+    height: 60px;
+    box-shadow: 0 0 4px rgba(0,0,0,0.1);
+    border-radius: 4px;
+  }
+  
+  .light-square {
+    background-color: #f2e8c9; /* light sand tone */
+  }
+  
+  .dark-square {
+    background-color: #d4b88d; /* darker clay tone */
+  }
+  
+  .rules-section h3 {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #444;
+  }
+  
+  .pawn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-top: 5px;
+    margin-left: auto;
+    margin-right: auto;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .pawn-a {
+    background-color: #ffffff; /* Light player (A) */
+    border: 2px solid #888;
+  }
+  
+  .pawn-b {
+    background-color: #333333; /* Dark player (B) */
+    border: 2px solid #aaa;
+  }
+  
