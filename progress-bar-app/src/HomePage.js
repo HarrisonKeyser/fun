@@ -47,7 +47,7 @@ function HomePage() {
 
         {/* DEMOS SECTION */}
         <section className="homepage-section">
-          <h2 className="section-title">Demos</h2>
+          <h2 className="section-title">Demos for Recruiters</h2>
           <div className="nav-container">
             <div className="nav-item">
               <Link to="/university-retention">
