@@ -293,13 +293,14 @@ function Senet() {
             <h2>How to Play Egyptian Senet</h2>
 
             <p>
-                The goal of the game is to move all five of your pawns across the Senet board and remove them before your opponent does.
+                The goal of the game is to move all five of your pawns across the Senet board and remove ("bear-off") them before your opponent does.
             </p>
 
             <h3>Setup:</h3>
             <ul>
                 <li>Each player has 5 pawns.</li>
                 <li>Pawns are placed alternating colors on squares 1-10 (each square is called a "house"). One player begins in houses 1, 3, 5, 7, 9. The other player begins in houses 2, 4, 6, 8, 10.</li>
+                <li>Pawns move through houses in a zig-zag pattern: the upper-left corner is house 1, the upper-right corner is house 10, the middle-right corner is house 11, the middle-left corner is house 20, the lower-left corner is house 21, and the lower-right corner is house 30.</li>
                 <li>To determine who goes first, players take turns throwing casting sticks until one rolls a “1.” That player uses the darker pawns and makes the first move.</li>
             </ul>
 
@@ -329,12 +330,13 @@ function Senet() {
 
             <h3>Special Houses:</h3>
             <ul>
+                <li>Pawns in houses 26, 28, 29, or 30 can be removed from the board.</li>
                 <li><strong>House 15 – House of Rebirth:</strong> Pawns are returned to this house if they land on House 27. Pawns cannot be captured while in this house.</li>
-                <li><strong>House 26 – House of Happiness:</strong> All pawns must land here before continuing along the board.</li>
+                <li><strong>House 26 – House of Happiness:</strong> All pawns must land here before continuing along the board. Pawns in this house can be borne-off by rolling a 5.</li>
                 <li><strong>House 27 – House of Water:</strong> Pawns landing here must return to House 15 or the first empty house before it.</li>
-                <li><strong>House 28 – House of Three Truths:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly 3 lights.</li>
-                <li><strong>House 29 – House of Re-Atoum:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly 2 lights.</li>
-                <li><strong>House 30 – House of Horus:</strong> The final house. Pawns in this house can be captured. To remove pawns from this house, roll exactly 1 light. If houses 1–10 are all empty, pawns occupying this house can be removed with any roll.</li>
+                <li><strong>House 28 – House of Three Truths:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly a 3.</li>
+                <li><strong>House 29 – House of Re-Atoum:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly a 2.</li>
+                <li><strong>House 30 – House of Horus:</strong> The final house. Pawns in this house can be captured. To bear-off pawns from this house, roll exactly a 1. If houses 1–10 are all empty, pawns occupying this house can be removed with any roll.</li>
             </ul>
         </div>
 
