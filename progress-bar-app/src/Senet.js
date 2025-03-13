@@ -300,7 +300,7 @@ function Senet() {
             <ul>
                 <li>Each player has 5 pawns.</li>
                 <li>Pawns are placed alternating colors on squares 1-10 (each square is called a "house"). One player begins in houses 1, 3, 5, 7, 9. The other player begins in houses 2, 4, 6, 8, 10.</li>
-                <li>Pawns move through houses in a zig-zag pattern: the upper-left corner is house 1, the upper-right corner is house 10, the middle-right corner is house 11, the middle-left corner is house 20, the lower-left corner is house 21, and the lower-right corner is house 30.</li>
+                <li>Pawns move through houses in a zig-zag pattern: the upper-left corner is house 1, and the upper-right corner is house 10. In the second row, the rightmost house is house 11, and the leftmost house is house 20. In the third row, the lower-left corner is house 21, and the lower-right corner is house 30.</li>
                 <li>To determine who goes first, players take turns throwing casting sticks until one rolls a “1.” That player uses the darker pawns and makes the first move.</li>
             </ul>
 
