@@ -223,8 +223,8 @@ function Senet() {
                             // 1. House 26 Rule: Must be in House 26 to go to 27-30
                             if (num !== 26 && targetHouse >= 27) return;
                           
-                            // 2. Cannot move to safe zones (26, 28, 29) if already occupied
-                            if ([26, 28, 29].includes(targetHouse) && destination) return;
+                            // 2. Cannot move to safe zones (15, 26, 28, 29) if already occupied
+                            if ([15, 26, 28, 29].includes(targetHouse) && destination) return;
                           
                             // 3. Cannot land on own pawn
                             if (destination === currentPlayer) return;
@@ -329,8 +329,8 @@ function Senet() {
 
             <h3>Special Houses:</h3>
             <ul>
-                <li><strong>House 15 – House of Rebirth:</strong> Pawns are returned to this house if they land on House 27.</li>
-                <li><strong>House 26 – House of Happiness:</strong> All pawns must land here at least once before continuing along the board.</li>
+                <li><strong>House 15 – House of Rebirth:</strong> Pawns are returned to this house if they land on House 27. Pawns cannot be captured while in this house.</li>
+                <li><strong>House 26 – House of Happiness:</strong> All pawns must land here before continuing along the board.</li>
                 <li><strong>House 27 – House of Water:</strong> Pawns landing here must return to House 15 or the first empty house before it.</li>
                 <li><strong>House 28 – House of Three Truths:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly 3 lights.</li>
                 <li><strong>House 29 – House of Re-Atoum:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly 2 lights.</li>
