@@ -15,6 +15,16 @@ const initialPawnPositions = {
     10: 'B',
   };
   
+  const houseSymbols = {
+    15: '𓋹',               // Ankh
+    26: '𓏍', // Three ceremonial vessels (House of Happiness)
+    27: '𓈗',               // Ripples of water
+    28: '𓅢',               // Three storks
+    29: '𓀀𓀀',        // Two seated men
+    30: '𓅉'                // Falcon on collar of beads
+  };
+  
+  
 
 function Senet() {
   const backArrowUrl = 'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/arrow-go-back.svg';
@@ -54,7 +64,11 @@ function Senet() {
                       className={`senet-square ${num % 2 === 0 ? 'light-square' : 'dark-square'}`}
                       key={num}
                     >
-                      {num}
+                      {/* {num} */}
+                      {houseSymbols[num] && (
+                        <div className="house-symbol">{houseSymbols[num]}</div>
+                      )}
+
                       {initialPawnPositions[num] && (
                         <div className={`pawn ${initialPawnPositions[num] === 'A' ? 'pawn-a' : 'pawn-b'}`}></div>
                       )}

@@ -83,3 +83,11 @@
     border: 2px solid #aaa;
   }
   
+  .house-symbol {
+    font-size: 38px;
+    line-height: 1;
+    margin-top: 4px;
+    text-align: center;
+    font-family: 'Noto Sans Egyptian Hieroglyphs', sans-serif;
+  }
+  
