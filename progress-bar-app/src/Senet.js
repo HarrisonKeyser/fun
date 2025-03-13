@@ -330,7 +330,7 @@ function Senet() {
 
             <h3>Special Houses:</h3>
             <ul>
-                <li>A pawn must be in houses 26, 28, 29, or 30 to be borne-off the board.</li>
+                <li>A pawn must be in house 26, 28, 29, or 30 to be borne-off the board.</li>
                 <li><strong>House 15 – House of Rebirth:</strong> Pawns are returned to this house if they land on House 27. Pawns cannot be captured while in this house.</li>
                 <li><strong>House 26 – House of Happiness:</strong> All pawns must land here before continuing along the board. Pawns in this house can be borne-off by rolling a 5.</li>
                 <li><strong>House 27 – House of Water:</strong> Pawns landing here must return to House 15 or the first empty house before it.</li>
