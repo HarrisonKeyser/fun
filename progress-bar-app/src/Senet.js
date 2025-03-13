@@ -87,7 +87,7 @@ function Senet() {
             <h3>Setup:</h3>
             <ul>
                 <li>Each player has 5 pawns.</li>
-                <li>Pawns are placed alternating colors on squares 1-10 (each square is called a "house"). Player 1 begins in houses 1, 3, 5, 7, 9; Player 2 begins in houses 2, 4, 6, 8, 10.</li>
+                <li>Pawns are placed alternating colors on squares 1-10 (each square is called a "house"). One player begins in houses 1, 3, 5, 7, 9. The other player begins in houses 2, 4, 6, 8, 10.</li>
                 <li>To determine who goes first, players take turns throwing casting sticks until one rolls a “1.” That player uses the darker pawns and makes the first move.</li>
             </ul>
 
