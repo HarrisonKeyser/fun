@@ -323,7 +323,7 @@ function Senet() {
                 <li>Two pawns cannot both occupy the same house.</li>
                 <li>Capturing: If a pawn lands on a house occupied by an opponent, the two pawns swap places.</li>
                 <li>Two adjacent pawns of the same color protect each other and cannot be captured.</li>
-                <li>Three adjacent pawns of the same color form a blockade — they cannot be captured or passed by the opponent.</li>
+                <li>Three adjacent pawns of the same color form a blockade — they cannot be captured or passed by an opponent.</li>
                 <li>If a player has no moves, they forfeit their turn. If a player has legal moves, they must play a legal move.</li>
             </ul>
 
