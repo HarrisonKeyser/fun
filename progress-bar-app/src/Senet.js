@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './Senet.css'; // We'll create this next
-
-const initialPawnPositions = {
+import './Senet.css';
+  
+  const houseSymbols = {
+    15: '𓋹',               // Ankh
+    26: '𓏍',              // Three ceremonial vessels
+    27: '𓈗',               // Ripples of water
+    28: '𓅢',               // Three storks
+    29: '𓀀𓀀',              // Two seated men
+    30: '𓅉'                // Falcon on collar of beads
+  };
+  
+function Senet() {
+  const [initialPawnPositions, setInitialPawnPositions] = useState({
     1: 'A',
     2: 'B',
     3: 'A',
@@ -13,22 +23,150 @@ const initialPawnPositions = {
     8: 'B',
     9: 'A',
     10: 'B',
-  };
+  });
   
-  const houseSymbols = {
-    15: '𓋹',               // Ankh
-    26: '𓏍', // Three ceremonial vessels (House of Happiness)
-    27: '𓈗',               // Ripples of water
-    28: '𓅢',               // Three storks
-    29: '𓀀𓀀',        // Two seated men
-    30: '𓅉'                // Falcon on collar of beads
-  };
-  
-  
-
-function Senet() {
+  const [diceResult, setDiceResult] = useState(null);
+  const [stickRolls, setStickRolls] = useState([]); // stores 4 booleans like [true, false, true, false]
   const backArrowUrl = 'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/arrow-go-back.svg';
+  const [currentPlayer, setCurrentPlayer] = useState('A'); // or 'B'
+  const [selectedHouse, setSelectedHouse] = useState(null);
+  const [hasRolled, setHasRolled] = useState(false);
 
+
+  const rollDice = () => {
+    const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5); // true = white, false = black
+    const whiteCount = sticks.filter(Boolean).length;
+    const result = whiteCount === 0 ? 5 : whiteCount;
+    if (hasRolled) return; // prevent extra rolls
+    setHasRolled(true);
+    setStickRolls(sticks);
+    setDiceResult(result);
+  };
+
+  const movePawn = () => {
+    if (selectedHouse === null || diceResult === null) return;
+  
+    const newHouse = selectedHouse + diceResult;
+    if (newHouse > 30) return;
+  
+    // Check borne-off conditions first
+    const canBearOff =
+      (selectedHouse === 26 && diceResult === 5) ||
+      (selectedHouse === 28 && diceResult === 3) ||
+      (selectedHouse === 29 && diceResult === 2) ||
+      (selectedHouse === 30 && (diceResult === 1 || noPawnsInFirstRow()));
+  
+    if (canBearOff) {
+      const newPositions = { ...initialPawnPositions };
+      newPositions[selectedHouse] = null;
+  
+      setInitialPawnPositions(newPositions);
+      setSelectedHouse(null);
+      setDiceResult(null);
+      setStickRolls([]);
+      setHasRolled(false);
+      setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+      return;
+    }
+  
+    // Create copy of positions
+    const newPositions = { ...initialPawnPositions };
+  
+    // House 27 logic – return to House 15 or nearest earlier open house
+    if (newHouse === 27) {
+      let fallback = 15;
+      while (fallback > 0 && newPositions[fallback]) {
+        fallback--;
+      }
+  
+      if (fallback > 0) {
+        newPositions[fallback] = currentPlayer;
+        newPositions[selectedHouse] = null;
+  
+        setInitialPawnPositions(newPositions);
+        setSelectedHouse(null);
+        setDiceResult(null);
+        setStickRolls([]);
+        setHasRolled(false);
+        setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+        return;
+      } else {
+        // No fallback position found — do not allow move
+        return;
+      }
+    }
+  
+    const destination = initialPawnPositions[newHouse];
+  
+    // Cannot land on own pawn (should be blocked at selection already, but double check)
+    if (destination === currentPlayer) return;
+  
+    // Prevent capturing pawns in safe zones
+    if (destination && destination !== currentPlayer && [26, 28, 29].includes(newHouse)) return;
+  
+    // Prevent capturing protected or blockaded pawns
+    const opponentProtected = isProtected(newHouse, initialPawnPositions);
+    const opponentBlockade = isBlockade(newHouse, initialPawnPositions);
+  
+    if (destination && destination !== currentPlayer) {
+      if (opponentBlockade) return;
+      if (opponentProtected) return;
+  
+      // Capture: swap places
+      newPositions[selectedHouse] = destination;
+      newPositions[newHouse] = currentPlayer;
+    } else {
+      // Normal move
+      newPositions[selectedHouse] = null;
+      newPositions[newHouse] = currentPlayer;
+    }
+  
+    // Update state
+    setInitialPawnPositions(newPositions);
+    setSelectedHouse(null);
+    setDiceResult(null);
+    setStickRolls([]);
+    setHasRolled(false);
+    setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+  };
+  
+  const noPawnsInFirstRow = () => {
+    for (let i = 1; i <= 10; i++) {
+      if (initialPawnPositions[i]) return false;
+    }
+    return true;
+  };  
+
+  const isProtected = (house, positions) => {
+    const player = positions[house];
+    if (!player) return false;
+  
+    const left = positions[house - 1] === player;
+    const right = positions[house + 1] === player;
+  
+    return left || right;
+  };
+  
+  const isBlockade = (house, positions) => {
+    const player = positions[house];
+    if (!player) return false;
+  
+    const left = positions[house - 1] === player;
+    const right = positions[house + 1] === player;
+  
+    return left && right;
+  };  
+
+  const pathBlockedByOpponentBlockade = (start, end, positions, currentPlayer) => {
+    for (let i = start + 1; i < end; i++) {
+      if (isBlockade(i, positions) && positions[i] !== currentPlayer) {
+        return true;
+      }
+    }
+    return false;
+  };
+  
+  
   return (
     <div className="App">
       <header className="App-header">
@@ -60,22 +198,96 @@ function Senet() {
                 }
 
                 return squares.map((num) => (
-                    <div
-                      className={`senet-square ${num % 2 === 0 ? 'light-square' : 'dark-square'}`}
-                      key={num}
-                    >
+                      <div
+                        className={`senet-square ${num % 2 === 0 ? 'light-square' : 'dark-square'} ${
+                          selectedHouse !== null && num === selectedHouse + diceResult ? 'highlight-destination' : ''
+                        }`}
+                        key={num}
+                      >
                       {/* {num} */}
                       {houseSymbols[num] && (
                         <div className="house-symbol">{houseSymbols[num]}</div>
                       )}
 
                       {initialPawnPositions[num] && (
-                        <div className={`pawn ${initialPawnPositions[num] === 'A' ? 'pawn-a' : 'pawn-b'}`}></div>
+                        <div
+                          className={`pawn ${initialPawnPositions[num] === 'A' ? 'pawn-a' : 'pawn-b'}`}
+                          onClick={() => {
+                            if (initialPawnPositions[num] !== currentPlayer || diceResult === null) return;
+                          
+                            const targetHouse = num + diceResult;
+                            if (targetHouse > 30) return;
+                          
+                            const destination = initialPawnPositions[targetHouse];
+                          
+                            // 1. House 26 Rule: Must be in House 26 to go to 27-30
+                            if (num !== 26 && targetHouse >= 27) return;
+                          
+                            // 2. Cannot move to safe zones (26, 28, 29) if already occupied
+                            if ([26, 28, 29].includes(targetHouse) && destination) return;
+                          
+                            // 3. Cannot land on own pawn
+                            if (destination === currentPlayer) return;
+                          
+                            // 4. Cannot capture protected opponent pawn
+                            if (destination && destination !== currentPlayer && isProtected(targetHouse, initialPawnPositions)) return;
+                          
+                            // 5. Cannot capture into a blockade
+                            if (destination && destination !== currentPlayer && isBlockade(targetHouse, initialPawnPositions)) return;
+                          
+                            // 6. Cannot move through an enemy blockade
+                            if (pathBlockedByOpponentBlockade(num, targetHouse, initialPawnPositions, currentPlayer)) return;
+                          
+                            setSelectedHouse(num);
+                          }}
+                          style={{
+                            outline: selectedHouse === num ? '2px solid gold' : 'none',
+                            cursor: initialPawnPositions[num] === currentPlayer ? 'pointer' : 'default',
+                          }}
+                        />
                       )}
+
                     </div>
                   ));                                   
             })()}
         </div>
+    
+        <div className="dice-section">
+          <div className="dice-controls">
+            <button onClick={movePawn} disabled={selectedHouse === null || diceResult === null}>
+              Move Selected Pawn
+            </button>
+            <button onClick={rollDice} disabled={hasRolled}>
+              Roll
+            </button>
+          </div>
+
+          {stickRolls.length > 0 && (
+            <div className="dice-visual">
+              {stickRolls.map((stick, index) => (
+                <div
+                  key={index}
+                  className={`stick ${stick ? 'white-stick' : 'black-stick'}`}
+                />
+              ))}
+            </div>
+          )}
+
+            {diceResult !== null && (
+              <p className="dice-result">You rolled a {diceResult}</p>
+            )}
+          </div>
+
+          <p className="turn-indicator">
+            Current Turn: <span
+              style={{
+                color: currentPlayer === 'A' ? 'hsl(195, 78%, 73%)' : '#0a470e',
+                fontWeight: 'bold'
+              }}
+            >
+              {currentPlayer === 'A' ? 'Blue' : 'Green'}
+            </span>
+          </p>
 
         <div className="rules-section">
             <h2>How to Play Egyptian Senet</h2>
@@ -109,7 +321,7 @@ function Senet() {
             <ul>
                 <li>Players take turns rolling and moving a single pawn.</li>
                 <li>Two pawns cannot both occupy the same house.</li>
-                <li>If a pawn lands on a house occupied by an opponent, the two pawns swap places.</li>
+                <li>Capturing: If a pawn lands on a house occupied by an opponent, the two pawns swap places.</li>
                 <li>Two adjacent pawns of the same color protect each other and cannot be captured.</li>
                 <li>Three adjacent pawns of the same color form a blockade — they cannot be captured or passed.</li>
                 <li>If a player has no moves, they forfeit their turn. If a player has legal moves, they must play a legal move.</li>

@@ -33,9 +33,13 @@ function HomePage() {
           <h2 className="section-title">Learn</h2>
           <div className="nav-container">
             <div className="nav-item">
-              <Link to="/baseball">
+              {/* <Link to="/baseball">
                 <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/BaseballThumbnailv1.png" alt="Predicting Baseball Home Runs" />
-              </Link>
+              </Link> */}
+              <img
+                src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/BaseballThumbnailConstruction.png"
+                alt="Baseball Page Under Construction"
+              />
             </div>
             <div className="nav-item">
               <Link to="/yahtzee">
