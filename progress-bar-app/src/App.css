@@ -55,3 +55,7 @@
   opacity: 0;
   transition: opacity 250ms ease-in;
 }
+
+html, body {
+  background-color: #ecf1fb; /* your preferred background color */
+}

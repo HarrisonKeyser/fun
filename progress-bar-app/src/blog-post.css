@@ -56,3 +56,9 @@
     line-height: 1.6;
   }
   
+  @media (max-width: 768px) {
+    .video-container {
+      margin-top: 60px; /* or more depending on your arrow size */
+    }
+  }
+  
