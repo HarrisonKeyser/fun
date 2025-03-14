@@ -1,16 +1,15 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Senet.css';
   
-  const houseSymbols = {
-    15: '𓋹',               // Ankh
-    26: '𓏍',              // Three ceremonial vessels
-    27: '𓈗',               // Ripples of water
-    28: '𓅢',               // Three storks
-    29: '𓀀𓀀',              // Two seated men
-    30: '𓅉'                // Falcon on collar of beads
-  };
+const houseSymbols = {
+  15: '𓋹',               // Ankh
+  26: '𓏍',              // Three ceremonial vessels
+  27: '𓈗',               // Ripples of water
+  28: '𓅢',               // Three storks
+  29: '𓀀𓀀',              // Two seated men
+  30: '𓅉'                // Falcon on collar of beads
+};
   
 function Senet() {
   const [initialPawnPositions, setInitialPawnPositions] = useState({
@@ -36,7 +35,32 @@ function Senet() {
   const [borneOffB, setBorneOffB] = useState(0);
   const [winner, setWinner] = useState(null);
   const [opponent, setOpponent] = useState('human'); // Default to Human opponent
-  const [computerPlayer, setComputerPlayer] = useState('B');
+  const [computerPlayer, setComputerPlayer] = useState(null);
+  const [aiDifficulty, setAiDifficulty] = useState('easy'); // or 'medium'
+
+  // New reset game function
+  const resetGame = () => {
+    setInitialPawnPositions({
+      1: 'A',
+      2: 'B',
+      3: 'A',
+      4: 'B',
+      5: 'A',
+      6: 'B',
+      7: 'A',
+      8: 'B',
+      9: 'A',
+      10: 'B',
+    });
+    setDiceResult(null);
+    setStickRolls([]);
+    setCurrentPlayer('B'); // Always start with B
+    setSelectedHouse(null);
+    setHasRolled(false);
+    setBorneOffA(0);
+    setBorneOffB(0);
+    setWinner(null);
+  };
 
   const rollDice = () => {
     const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5); // true = white, false = black
@@ -46,6 +70,15 @@ function Senet() {
     setHasRolled(true);
     setStickRolls(sticks);
     setDiceResult(result);
+    if (!hasLegalMove(currentPlayer, result)) {
+      setTimeout(() => {
+        setSelectedHouse(null);
+        setDiceResult(null);
+        setStickRolls([]);
+        setHasRolled(false);
+        setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+      }, 1000); // short delay so player sees the roll
+    }
   };
 
   const movePawn = () => {
@@ -60,36 +93,36 @@ function Senet() {
       (selectedHouse === 29 && diceResult === 2) ||
       (selectedHouse === 30 && (diceResult === 1 || noPawnsInFirstRow()));
   
-      if (canBearOff) {
-        const newPositions = { ...initialPawnPositions };
-        newPositions[selectedHouse] = null;
-        setInitialPawnPositions(newPositions);
-      
-        // Update borne-off count and trigger winner if needed
-        if (currentPlayer === 'A') {
-          const newCount = borneOffA + 1;
-          setBorneOffA(newCount);
-          if (newCount === 5) {
-            setWinner('Blue (Player A)');
-            return;
-          }
-        } else {
-          const newCount = borneOffB + 1;
-          setBorneOffB(newCount);
-          if (newCount === 5) {
-            setWinner('Green (Player B)');
-            return;
-          }
+    if (canBearOff) {
+      const newPositions = { ...initialPawnPositions };
+      newPositions[selectedHouse] = null;
+      setInitialPawnPositions(newPositions);
+    
+      // Update borne-off count and trigger winner if needed
+      if (currentPlayer === 'A') {
+        const newCount = borneOffA + 1;
+        setBorneOffA(newCount);
+        if (newCount === 5) {
+          setWinner('Blue');
+          return;
         }
-      
-        // Finish turn after pawn is removed
-        setSelectedHouse(null);
-        setDiceResult(null);
-        setStickRolls([]);
-        setHasRolled(false);
-        setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
-        return;
-      }      
+      } else {
+        const newCount = borneOffB + 1;
+        setBorneOffB(newCount);
+        if (newCount === 5) {
+          setWinner('Green');
+          return;
+        }
+      }
+    
+      // Finish turn after pawn is removed
+      setSelectedHouse(null);
+      setDiceResult(null);
+      setStickRolls([]);
+      setHasRolled(false);
+      setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+      return;
+    }      
   
     // Create copy of positions
     const newPositions = { ...initialPawnPositions };
@@ -152,7 +185,7 @@ function Senet() {
     setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
   };
 
-  const computerMove = () => {
+  const easyComputerMove = () => {
     // Roll automatically
     const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5);
     const whiteCount = sticks.filter(Boolean).length;
@@ -173,7 +206,6 @@ function Senet() {
         if (player !== computerPlayer) return;
   
         const targetHouse = house + result;
-        if (targetHouse > 30) return;
   
         const destination = currentPositions[targetHouse];
   
@@ -218,8 +250,96 @@ function Senet() {
       }, 800);
     }, 1000); // Delay before choosing move
   };
+
+  const mediumComputerMove = () => {
+    const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5);
+    const whiteCount = sticks.filter(Boolean).length;
+    const result = whiteCount === 0 ? 5 : whiteCount;
+    const humanPlayer = computerPlayer === 'A' ? 'B' : 'A';
   
-  // New function that doesn't rely on React state for the computer's move
+    setStickRolls(sticks);
+    setDiceResult(result);
+    setHasRolled(true);
+  
+    setTimeout(() => {
+      const bearOffMoves = [];
+      const specialHouseMoves = [];
+      const captureMoves = [];
+      const safeMoves = [];
+      const fallbackMoves = [];
+  
+      const currentPositions = { ...initialPawnPositions };
+  
+      Object.entries(currentPositions).forEach(([houseStr, player]) => {
+        const house = parseInt(houseStr);
+        if (player !== computerPlayer) return;
+  
+        const targetHouse = house + result;
+        const destination = currentPositions[targetHouse];
+  
+        const isBearOffMove =
+          (house === 26 && result === 5) ||
+          (house === 28 && result === 3) ||
+          (house === 29 && result === 2) ||
+          (house === 30 && (result === 1 || noPawnsInFirstRow()));
+  
+        if (isBearOffMove) {
+          bearOffMoves.push({ from: house, to: house, bearOff: true });
+          return;
+        }
+  
+        if (targetHouse > 30) return;
+        if (house !== 26 && targetHouse >= 27) return;
+        if ([15, 26, 28, 29].includes(targetHouse) && currentPositions[targetHouse]) return;
+        if (destination === computerPlayer) return;
+        if (destination === humanPlayer && isProtected(targetHouse, currentPositions)) return;
+        if (destination === humanPlayer && isBlockade(targetHouse, currentPositions)) return;
+        if (pathBlockedByOpponentBlockade(house, targetHouse, currentPositions, computerPlayer)) return;
+  
+        if ([26, 28, 29].includes(targetHouse)) {
+          specialHouseMoves.push({ from: house, to: targetHouse });
+        } else if (destination === humanPlayer) {
+          captureMoves.push({ from: house, to: targetHouse });
+        } else if (targetHouse === 27) {
+          fallbackMoves.push({ from: house, to: targetHouse });
+        } else {
+          safeMoves.push({ from: house, to: targetHouse });
+        }
+      });
+  
+      let move = null;
+      if (bearOffMoves.length > 0) {
+        move = bearOffMoves[Math.floor(Math.random() * bearOffMoves.length)];
+      } else if (specialHouseMoves.length > 0) {
+        move = specialHouseMoves[Math.floor(Math.random() * specialHouseMoves.length)];
+      } else if (captureMoves.length > 0) {
+        move = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+      } else if (safeMoves.length > 0) {
+        move = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+      } else if (fallbackMoves.length > 0) {
+        move = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
+      }
+  
+      if (!move) {
+        // No legal move
+        setTimeout(() => {
+          finishTurn();
+        }, 1000);
+        return;
+      }
+  
+      // Select pawn visually for feedback
+      setSelectedHouse(move.from);
+  
+      // Delay before executing
+      setTimeout(() => {
+        executeComputerMove(move.from, result, currentPositions);
+      }, 800);
+    }, 800);
+  };
+  
+  
+  // Updated function that uses computerPlayer state instead of hardcoded 'B'
   const executeComputerMove = (fromHouse, moveResult, positions) => {
     // Create a copy of positions - using the passed in positions to avoid state timing issues
     const newPositions = {...positions};
@@ -236,12 +356,21 @@ function Senet() {
       newPositions[fromHouse] = null;
       setInitialPawnPositions(newPositions);
     
-      // Update borne-off count and trigger winner if needed
-      const newCount = borneOffB + 1;
-      setBorneOffB(newCount);
-      if (newCount === 5) {
-        setWinner('Green (Player B)');
-        return;
+      // Update borne-off count based on which player the computer is
+      if (computerPlayer === 'A') {
+        const newCount = borneOffA + 1;
+        setBorneOffA(newCount);
+        if (newCount === 5) {
+          setWinner('Blue');
+          return;
+        }
+      } else {
+        const newCount = borneOffB + 1;
+        setBorneOffB(newCount);
+        if (newCount === 5) {
+          setWinner('Green');
+          return;
+        }
       }
     
       // Finish turn
@@ -257,7 +386,7 @@ function Senet() {
       }
   
       if (fallback > 0) {
-        newPositions[fallback] = 'B';
+        newPositions[fallback] = computerPlayer;
         newPositions[fromHouse] = null;
   
         setInitialPawnPositions(newPositions);
@@ -273,13 +402,13 @@ function Senet() {
     const destination = newPositions[newHouse];
   
     // Cannot land on own pawn
-    if (destination === 'B') {
+    if (destination === computerPlayer) {
       finishTurn();
       return;
     }
   
     // Prevent capturing pawns in safe zones
-    if (destination && destination !== 'B' && [26, 28, 29].includes(newHouse)) {
+    if (destination && destination !== computerPlayer && [26, 28, 29].includes(newHouse)) {
       finishTurn();
       return;
     }
@@ -288,7 +417,7 @@ function Senet() {
     const opponentProtected = isProtected(newHouse, newPositions);
     const opponentBlockade = isBlockade(newHouse, newPositions);
   
-    if (destination && destination !== 'B') {
+    if (destination && destination !== computerPlayer) {
       if (opponentBlockade || opponentProtected) {
         finishTurn();
         return;
@@ -296,17 +425,47 @@ function Senet() {
   
       // Capture: swap places
       newPositions[fromHouse] = destination;
-      newPositions[newHouse] = 'B';
+      newPositions[newHouse] = computerPlayer;
     } else {
       // Normal move
       newPositions[fromHouse] = null;
-      newPositions[newHouse] = 'B';
+      newPositions[newHouse] = computerPlayer;
     }
   
     // Update state
     setInitialPawnPositions(newPositions);
     finishTurn();
   };
+
+  const hasLegalMove = (player, result) => {
+  
+    for (let house = 1; house <= 30; house++) {
+      if (initialPawnPositions[house] !== player) continue;
+  
+      const targetHouse = house + result;
+      const destination = initialPawnPositions[targetHouse];
+  
+      const isBearOffMove =
+        (house === 26 && result === 5) ||
+        (house === 28 && result === 3) ||
+        (house === 29 && result === 2) ||
+        (house === 30 && (result === 1 || noPawnsInFirstRow()));
+  
+      if (isBearOffMove) return true;
+      if (targetHouse > 30) continue;
+      if (house !== 26 && targetHouse >= 27) continue;
+      if ([15, 26, 28, 29].includes(targetHouse) && destination) continue;
+      if (destination === player) continue;
+      if (destination && destination !== player && isProtected(targetHouse, initialPawnPositions)) continue;
+      if (destination && destination !== player && isBlockade(targetHouse, initialPawnPositions)) continue;
+      if (pathBlockedByOpponentBlockade(house, targetHouse, initialPawnPositions, player)) continue;
+  
+      return true; // Found a valid move
+    }
+  
+    return false; // No valid moves
+  };
+  
   
   // Helper to reset turn state
   const finishTurn = () => {
@@ -317,14 +476,17 @@ function Senet() {
     setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
   };
   
-
   useEffect(() => {
-    if (opponent === 'computer' && currentPlayer === computerPlayer) {
+    if (opponent === 'computer' && currentPlayer === computerPlayer && !winner) {
       setTimeout(() => {
-        computerMove();
-      }, 800); // delay for realism
+        if (aiDifficulty === 'easy') {
+          easyComputerMove();
+        } else if (aiDifficulty === 'medium') {
+          mediumComputerMove();
+        }
+      }, 800);
     }
-  }, [currentPlayer]);
+  }, [currentPlayer, computerPlayer, opponent, aiDifficulty, winner]);
   
   const noPawnsInFirstRow = () => {
     for (let i = 1; i <= 10; i++) {
@@ -362,7 +524,6 @@ function Senet() {
     return false;
   };
   
-  
   return (
     <div className="App">
       <header className="App-header">
@@ -384,32 +545,43 @@ function Senet() {
         )}
 
         <p className="intro-text">
-          Senet is one of the world's oldest known board games, played in Ancient Egypt over 5,000 years ago.
+          Senet is one of the world's oldest known board games. It was played in Ancient Egypt over 5,000 years ago.
         </p>
 
         <div className="opponent-selector">
-        <label htmlFor="opponentSelect">Opponent:</label>
+          <label htmlFor="opponentSelect">Opponent:</label>
           <select
             id="opponentSelect"
-            value={opponent}
+            value={
+              opponent === 'human'
+                ? 'human'
+                : aiDifficulty === 'easy'
+                ? 'computer-easy'
+                : 'computer-medium'
+            }
             onChange={(e) => {
               const value = e.target.value;
-              setOpponent(value);
 
-              // Randomize computer side (optional) or let user choose
-              if (value === 'computer') {
-                // Option A: Randomly assign computer to A or B
+              if (value === 'human') {
+                setOpponent('human');
+                setComputerPlayer(null);
+              } else {
+                setOpponent('computer');
+                const difficulty = value === 'computer-easy' ? 'easy' : 'medium';
+                setAiDifficulty(difficulty);
                 const randomSide = Math.random() < 0.5 ? 'A' : 'B';
                 setComputerPlayer(randomSide);
-              } else {
-                setComputerPlayer(null);
               }
+
+              resetGame(); // Reset *after* opponent and difficulty are set
             }}
           >
             <option value="human">Human</option>
-            <option value="computer">Computer (Easy)</option>
+            <option value="computer-easy">Computer (Easy)</option>
+            <option value="computer-medium">Computer (Medium)</option>
           </select>
         </div>
+
 
         <div className="senet-board-container">
               {/* Left Column: Borne-off Blue */}
@@ -504,10 +676,21 @@ function Senet() {
     
         <div className="dice-section">
           <div className="dice-controls">
-            <button onClick={movePawn} disabled={selectedHouse === null || diceResult === null}>
-              Move Selected Pawn
-            </button>
-            <button onClick={rollDice} disabled={hasRolled}>
+          <button
+            onClick={movePawn}
+            disabled={
+              selectedHouse === null ||
+              diceResult === null ||
+              (opponent === 'computer' && currentPlayer === computerPlayer) ||
+              winner !== null
+            }
+          >
+            Move Selected Pawn
+          </button>
+            <button 
+              onClick={rollDice} 
+              disabled={hasRolled || (opponent === 'computer' && currentPlayer === computerPlayer)}
+            >
               Roll
             </button>
           </div>
@@ -586,7 +769,7 @@ function Senet() {
                 <li><strong>House 27 – House of Water:</strong> Pawns landing here must return to House 15 or the first empty house before it.</li>
                 <li><strong>House 28 – House of Three Truths:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly a 3.</li>
                 <li><strong>House 29 – House of Re-Atoum:</strong> Pawns entering this house become stuck; they cannot be captured and can only be removed by rolling exactly a 2.</li>
-                <li><strong>House 30 – House of Horus:</strong> The final house. Pawns in this house can be captured. To bear-off pawns from this house, roll exactly a 1. If houses 1–10 are all empty, pawns occupying this house can be removed with any roll.</li>
+                <li><strong>House 30 – House of Horus:</strong> The final house. Pawns in this house can be captured. To bear-off pawns from this house, roll exactly a 1. If houses 1–10 are all empty, pawns occupying this house can be borne-off with any roll.</li>
             </ul>
         </div>
 
