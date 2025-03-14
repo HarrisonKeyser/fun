@@ -31,7 +31,9 @@ function Senet() {
   const [currentPlayer, setCurrentPlayer] = useState('A'); // or 'B'
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [hasRolled, setHasRolled] = useState(false);
-
+  const [borneOffA, setBorneOffA] = useState(0);
+  const [borneOffB, setBorneOffB] = useState(0);
+  const [winner, setWinner] = useState(null);
 
   const rollDice = () => {
     const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5); // true = white, false = black
@@ -47,7 +49,6 @@ function Senet() {
     if (selectedHouse === null || diceResult === null) return;
   
     const newHouse = selectedHouse + diceResult;
-    if (newHouse > 30) return;
   
     // Check borne-off conditions first
     const canBearOff =
@@ -56,18 +57,36 @@ function Senet() {
       (selectedHouse === 29 && diceResult === 2) ||
       (selectedHouse === 30 && (diceResult === 1 || noPawnsInFirstRow()));
   
-    if (canBearOff) {
-      const newPositions = { ...initialPawnPositions };
-      newPositions[selectedHouse] = null;
-  
-      setInitialPawnPositions(newPositions);
-      setSelectedHouse(null);
-      setDiceResult(null);
-      setStickRolls([]);
-      setHasRolled(false);
-      setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
-      return;
-    }
+      if (canBearOff) {
+        const newPositions = { ...initialPawnPositions };
+        newPositions[selectedHouse] = null;
+        setInitialPawnPositions(newPositions);
+      
+        // Update borne-off count and trigger winner if needed
+        if (currentPlayer === 'A') {
+          const newCount = borneOffA + 1;
+          setBorneOffA(newCount);
+          if (newCount === 5) {
+            setWinner('Blue (Player A)');
+            return;
+          }
+        } else {
+          const newCount = borneOffB + 1;
+          setBorneOffB(newCount);
+          if (newCount === 5) {
+            setWinner('Green (Player B)');
+            return;
+          }
+        }
+      
+        // Finish turn after pawn is removed
+        setSelectedHouse(null);
+        setDiceResult(null);
+        setStickRolls([]);
+        setHasRolled(false);
+        setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+        return;
+      }      
   
     // Create copy of positions
     const newPositions = { ...initialPawnPositions };
@@ -181,29 +200,42 @@ function Senet() {
 
         <h1>Egyptian Senet</h1>
 
+        {winner && (
+          <div className="win-message">
+            🎉 {winner} wins! 🎉
+          </div>
+        )}
+
         <p className="intro-text">
           Senet is one of the world's oldest known board games, played in Ancient Egypt over 5,000 years ago.
         </p>
 
-        <div className="senet-board">
-            {(() => {
-                // Build zigzag order manually
-                const squares = [];
+        <div className="senet-board-container">
+              {/* Left Column: Borne-off Blue */}
+              <div className="borne-off-column">
+                {[...Array(borneOffA)].map((_, i) => (
+                  <div key={i} className="pawn pawn-a small-pawn" />
+                ))}
+              </div>
 
-                for (let row = 0; row < 3; row++) {
-                const base = row * 10;
-                const rowNumbers = Array.from({ length: 10 }, (_, i) => base + i + 1);
-                const displayRow = row === 1 ? rowNumbers.reverse() : rowNumbers;
-                squares.push(...displayRow);
-                }
+              {/* Middle Column: Actual Board */}
+              <div className="senet-board">
+                {(() => {
+                  const squares = [];
+                  for (let row = 0; row < 3; row++) {
+                    const base = row * 10;
+                    const rowNumbers = Array.from({ length: 10 }, (_, i) => base + i + 1);
+                    const displayRow = row === 1 ? rowNumbers.reverse() : rowNumbers;
+                    squares.push(...displayRow);
+                  }
 
-                return squares.map((num) => (
-                      <div
-                        className={`senet-square ${num % 2 === 0 ? 'light-square' : 'dark-square'} ${
-                          selectedHouse !== null && num === selectedHouse + diceResult ? 'highlight-destination' : ''
-                        }`}
-                        key={num}
-                      >
+                  return squares.map((num) => (
+                    <div
+                      className={`senet-square ${num % 2 === 0 ? 'light-square' : 'dark-square'} ${
+                        selectedHouse !== null && num === selectedHouse + diceResult ? 'highlight-destination' : ''
+                      }`}
+                      key={num}
+                    >
                       {/* {num} */}
                       {houseSymbols[num] && (
                         <div className="house-symbol">{houseSymbols[num]}</div>
@@ -214,30 +246,30 @@ function Senet() {
                           className={`pawn ${initialPawnPositions[num] === 'A' ? 'pawn-a' : 'pawn-b'}`}
                           onClick={() => {
                             if (initialPawnPositions[num] !== currentPlayer || diceResult === null) return;
-                          
+
+                            const isBearOffMove =
+                              (num === 26 && diceResult === 5) ||
+                              (num === 28 && diceResult === 3) ||
+                              (num === 29 && diceResult === 2) ||
+                              (num === 30 && (diceResult === 1 || noPawnsInFirstRow()));
+
+                            if (isBearOffMove) {
+                              setSelectedHouse(num);
+                              return;
+                            }
+
                             const targetHouse = num + diceResult;
                             if (targetHouse > 30) return;
-                          
+
                             const destination = initialPawnPositions[targetHouse];
-                          
-                            // 1. House 26 Rule: Must be in House 26 to go to 27-30
+
                             if (num !== 26 && targetHouse >= 27) return;
-                          
-                            // 2. Cannot move to safe zones (15, 26, 28, 29) if already occupied
                             if ([15, 26, 28, 29].includes(targetHouse) && destination) return;
-                          
-                            // 3. Cannot land on own pawn
                             if (destination === currentPlayer) return;
-                          
-                            // 4. Cannot capture protected opponent pawn
                             if (destination && destination !== currentPlayer && isProtected(targetHouse, initialPawnPositions)) return;
-                          
-                            // 5. Cannot capture into a blockade
                             if (destination && destination !== currentPlayer && isBlockade(targetHouse, initialPawnPositions)) return;
-                          
-                            // 6. Cannot move through an enemy blockade
                             if (pathBlockedByOpponentBlockade(num, targetHouse, initialPawnPositions, currentPlayer)) return;
-                          
+
                             setSelectedHouse(num);
                           }}
                           style={{
@@ -246,11 +278,19 @@ function Senet() {
                           }}
                         />
                       )}
-
                     </div>
-                  ));                                   
-            })()}
+                  ));
+                })()}
+              </div>
+
+              {/* Right Column: Borne-off Green */}
+              <div className="borne-off-column">
+                {[...Array(borneOffB)].map((_, i) => (
+                  <div key={i} className="pawn pawn-b small-pawn" />
+                ))}
+              </div>
         </div>
+
     
         <div className="dice-section">
           <div className="dice-controls">

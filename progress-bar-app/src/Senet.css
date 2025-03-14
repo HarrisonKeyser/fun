@@ -19,7 +19,7 @@
   }
   
   .board-placeholder {
-    margin-top: 40px;
+    margin-top: 20px;
     text-align: center;
     font-style: italic;
     color: #777;
@@ -31,7 +31,7 @@
     grid-template-rows: repeat(3, 60px);
     gap: 5px;
     justify-content: center;
-    margin-top: 40px;
+    margin-top: 10px;
   }
   
   .senet-square {
@@ -96,15 +96,15 @@
   
   .dice-section {
     text-align: center;
-    margin-top: 40px;
+    margin-top: 10px;
   }
   
   button {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
   
   .dice-visual {
@@ -138,13 +138,74 @@
   .dice-controls {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    margin-bottom: 10px;
+    gap: 10px;
   }
   
   .highlight-destination {
     outline: 3px solid gold;
     box-shadow: 0 0 10px gold;
     z-index: 1;
+  }
+  
+  .borne-off-section {
+    display: flex;
+    gap: 40px;
+    margin: 20px 0;
+  }
+
+  
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .win-message {
+    background-color: gold;
+    color: black;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    font-weight: bold;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+  
+  .senet-board-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    margin: 10px 0;
+  }
+  
+/* Borne-off columns */
+.borne-off-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px; /* Ensures width so content doesn't squeeze in */
+}
+  
+  .borne-off-label {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .small-pawn {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin: 4px 0; /* <-- Ensures vertical spacing */
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+  
+  .turn-indicator {
+    margin-top: 5px;  /* or even 0px if you want it tighter */
+    text-align: center;
   }
   
