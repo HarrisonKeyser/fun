@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Senet.css';
   
@@ -28,12 +29,14 @@ function Senet() {
   const [diceResult, setDiceResult] = useState(null);
   const [stickRolls, setStickRolls] = useState([]); // stores 4 booleans like [true, false, true, false]
   const backArrowUrl = 'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/arrow-go-back.svg';
-  const [currentPlayer, setCurrentPlayer] = useState('A'); // or 'B'
+  const [currentPlayer, setCurrentPlayer] = useState('B'); // or 'B'
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [hasRolled, setHasRolled] = useState(false);
   const [borneOffA, setBorneOffA] = useState(0);
   const [borneOffB, setBorneOffB] = useState(0);
   const [winner, setWinner] = useState(null);
+  const [opponent, setOpponent] = useState('human'); // Default to Human opponent
+  const [computerPlayer, setComputerPlayer] = useState('B');
 
   const rollDice = () => {
     const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5); // true = white, false = black
@@ -148,6 +151,180 @@ function Senet() {
     setHasRolled(false);
     setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
   };
+
+  const computerMove = () => {
+    // Roll automatically
+    const sticks = Array.from({ length: 4 }, () => Math.random() < 0.5);
+    const whiteCount = sticks.filter(Boolean).length;
+    const result = whiteCount === 0 ? 5 : whiteCount;
+    const humanPlayer = computerPlayer === 'A' ? 'B' : 'A';
+
+    setStickRolls(sticks);
+    setDiceResult(result);
+    setHasRolled(true);
+  
+    // Wait a moment and then pick a random legal move
+    setTimeout(() => {
+      const possibleMoves = [];
+      const currentPositions = {...initialPawnPositions}; // Create a local copy for calculations
+  
+      Object.entries(currentPositions).forEach(([houseStr, player]) => {
+        const house = parseInt(houseStr);
+        if (player !== computerPlayer) return;
+  
+        const targetHouse = house + result;
+        if (targetHouse > 30) return;
+  
+        const destination = currentPositions[targetHouse];
+  
+        const isBearOffMove =
+          (house === 26 && result === 5) ||
+          (house === 28 && result === 3) ||
+          (house === 29 && result === 2) ||
+          (house === 30 && (result === 1 || noPawnsInFirstRow()));
+  
+        if (isBearOffMove) {
+          possibleMoves.push({ from: house, to: house, bearOff: true });
+          return;
+        }
+  
+        if (house !== 26 && targetHouse >= 27) return;
+        if ([15, 26, 28, 29].includes(targetHouse) && currentPositions[targetHouse]) return;
+        if (destination === computerPlayer) return;
+        if (destination === humanPlayer && isProtected(targetHouse, currentPositions)) return;
+        if (destination === humanPlayer && isBlockade(targetHouse, currentPositions)) return;
+        if (pathBlockedByOpponentBlockade(house, targetHouse, currentPositions, computerPlayer)) return;
+        possibleMoves.push({ from: house, to: targetHouse });
+      });
+  
+      if (possibleMoves.length === 0) {
+        // No legal move — end turn
+        setDiceResult(null);
+        setStickRolls([]);
+        setHasRolled(false);
+        setCurrentPlayer(humanPlayer);
+        return;
+      }
+  
+      const move = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+  
+      // Show the selected pawn for a moment
+      setSelectedHouse(move.from);
+      
+      // Then execute the move directly after a delay
+      setTimeout(() => {
+        // Execute the actual move using a direct function that doesn't rely on state
+        executeComputerMove(move.from, result, currentPositions);
+      }, 800);
+    }, 1000); // Delay before choosing move
+  };
+  
+  // New function that doesn't rely on React state for the computer's move
+  const executeComputerMove = (fromHouse, moveResult, positions) => {
+    // Create a copy of positions - using the passed in positions to avoid state timing issues
+    const newPositions = {...positions};
+    const newHouse = fromHouse + moveResult;
+      
+    // Check borne-off conditions first
+    const canBearOff =
+      (fromHouse === 26 && moveResult === 5) ||
+      (fromHouse === 28 && moveResult === 3) ||
+      (fromHouse === 29 && moveResult === 2) ||
+      (fromHouse === 30 && (moveResult === 1 || noPawnsInFirstRow()));
+  
+    if (canBearOff) {
+      newPositions[fromHouse] = null;
+      setInitialPawnPositions(newPositions);
+    
+      // Update borne-off count and trigger winner if needed
+      const newCount = borneOffB + 1;
+      setBorneOffB(newCount);
+      if (newCount === 5) {
+        setWinner('Green (Player B)');
+        return;
+      }
+    
+      // Finish turn
+      finishTurn();
+      return;
+    }    
+  
+    // House 27 logic – return to House 15 or nearest earlier open house
+    if (newHouse === 27) {
+      let fallback = 15;
+      while (fallback > 0 && newPositions[fallback]) {
+        fallback--;
+      }
+  
+      if (fallback > 0) {
+        newPositions[fallback] = 'B';
+        newPositions[fromHouse] = null;
+  
+        setInitialPawnPositions(newPositions);
+        finishTurn();
+        return;
+      } else {
+        // No fallback position found — end turn
+        finishTurn();
+        return;
+      }
+    }
+  
+    const destination = newPositions[newHouse];
+  
+    // Cannot land on own pawn
+    if (destination === 'B') {
+      finishTurn();
+      return;
+    }
+  
+    // Prevent capturing pawns in safe zones
+    if (destination && destination !== 'B' && [26, 28, 29].includes(newHouse)) {
+      finishTurn();
+      return;
+    }
+  
+    // Prevent capturing protected or blockaded pawns
+    const opponentProtected = isProtected(newHouse, newPositions);
+    const opponentBlockade = isBlockade(newHouse, newPositions);
+  
+    if (destination && destination !== 'B') {
+      if (opponentBlockade || opponentProtected) {
+        finishTurn();
+        return;
+      }
+  
+      // Capture: swap places
+      newPositions[fromHouse] = destination;
+      newPositions[newHouse] = 'B';
+    } else {
+      // Normal move
+      newPositions[fromHouse] = null;
+      newPositions[newHouse] = 'B';
+    }
+  
+    // Update state
+    setInitialPawnPositions(newPositions);
+    finishTurn();
+  };
+  
+  // Helper to reset turn state
+  const finishTurn = () => {
+    setSelectedHouse(null);
+    setDiceResult(null);
+    setStickRolls([]);
+    setHasRolled(false);
+    setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+  };
+  
+
+  useEffect(() => {
+    if (opponent === 'computer' && currentPlayer === computerPlayer) {
+      setTimeout(() => {
+        computerMove();
+      }, 800); // delay for realism
+    }
+  }, [currentPlayer]);
   
   const noPawnsInFirstRow = () => {
     for (let i = 1; i <= 10; i++) {
@@ -210,11 +387,35 @@ function Senet() {
           Senet is one of the world's oldest known board games, played in Ancient Egypt over 5,000 years ago.
         </p>
 
+        <div className="opponent-selector">
+        <label htmlFor="opponentSelect">Opponent:</label>
+          <select
+            id="opponentSelect"
+            value={opponent}
+            onChange={(e) => {
+              const value = e.target.value;
+              setOpponent(value);
+
+              // Randomize computer side (optional) or let user choose
+              if (value === 'computer') {
+                // Option A: Randomly assign computer to A or B
+                const randomSide = Math.random() < 0.5 ? 'A' : 'B';
+                setComputerPlayer(randomSide);
+              } else {
+                setComputerPlayer(null);
+              }
+            }}
+          >
+            <option value="human">Human</option>
+            <option value="computer">Computer (Easy)</option>
+          </select>
+        </div>
+
         <div className="senet-board-container">
               {/* Left Column: Borne-off Blue */}
               <div className="borne-off-column">
                 {[...Array(borneOffA)].map((_, i) => (
-                  <div key={i} className="pawn pawn-a small-pawn" />
+                  <div key={i} className="borne-off-pawn pawn-a" />
                 ))}
               </div>
 
@@ -235,6 +436,15 @@ function Senet() {
                         selectedHouse !== null && num === selectedHouse + diceResult ? 'highlight-destination' : ''
                       }`}
                       key={num}
+                      onClick={() => {
+                        // Optional: Prevent accidental clicks
+                        if (selectedHouse !== null && diceResult !== null && num === selectedHouse + diceResult) {
+                          movePawn();
+                        }
+                      }}
+                      style={{
+                        cursor: selectedHouse !== null && diceResult !== null && num === selectedHouse + diceResult ? 'pointer' : 'default'
+                      }}
                     >
                       {/* {num} */}
                       {houseSymbols[num] && (
@@ -286,7 +496,7 @@ function Senet() {
               {/* Right Column: Borne-off Green */}
               <div className="borne-off-column">
                 {[...Array(borneOffB)].map((_, i) => (
-                  <div key={i} className="pawn pawn-b small-pawn" />
+                  <div key={i} className="borne-off-pawn pawn-b" />
                 ))}
               </div>
         </div>
@@ -340,7 +550,7 @@ function Senet() {
             <ul>
                 <li>Each player has 5 pawns.</li>
                 <li>Pawns are placed alternating colors on squares 1-10 (each square is called a "house"). One player begins in houses 1, 3, 5, 7, 9. The other player begins in houses 2, 4, 6, 8, 10.</li>
-                <li>To determine who goes first, players take turns throwing casting sticks until one rolls a “1.” That player uses the darker pawns and makes the first move.</li>
+                <li>The player whose pawns are in houses 2, 4, 6, 8, 10 gets the first move.</li>
             </ul>
 
             <h3>Casting Sticks:</h3>

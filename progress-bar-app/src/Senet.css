@@ -1,211 +1,234 @@
 .intro-text {
-    max-width: 800px;
-    margin: 0 auto 20px auto;
-    text-align: center;
-    font-size: 18px;
-    line-height: 1.6;
-  }
-  
-  .rules-section {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: left;
-    font-size: 16px;
-  }
-  
-  .rules-section ul {
-    padding-left: 20px;
-  }
-  
-  .board-placeholder {
-    margin-top: 20px;
-    text-align: center;
-    font-style: italic;
-    color: #777;
-  }
-  
-  .senet-board {
-    display: grid;
-    grid-template-columns: repeat(10, 60px);
-    grid-template-rows: repeat(3, 60px);
-    gap: 5px;
-    justify-content: center;
-    margin-top: 10px;
-  }
-  
-  .senet-square {
-    background-color: #f2e8c9;
-    border: 1px solid #aa926f;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-size: 16px;
-    color: #333;
-    width: 60px;
-    height: 60px;
-    box-shadow: 0 0 4px rgba(0,0,0,0.1);
-    border-radius: 4px;
-    position: relative;
-  }
-  
-  .light-square {
-    background-color: #f2e8c9; /* light sand tone */
-  }
-  
-  .dark-square {
-    background-color: #d4b88d; /* darker clay tone */
-  }
-  
-  .rules-section h3 {
-    margin-top: 20px;
-    font-size: 18px;
-    color: #444;
-  }
-  
-  .pawn {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-    z-index: 2; /* ensure it appears above symbols */
-  }
-  
-  .pawn-a {
-    background-color: hsl(195, 78%, 73%); /* Light player (A) */
-    border: 2px solid #888;
-  }
-  
-  .pawn-b {
-    background-color: #0a470e; /* Dark player (B) */
-    border: 2px solid #aaa;
-  }
-  
-  .house-symbol {
-    font-size: 38px;
-    line-height: 1;
-    margin-top: 4px;
-    text-align: center;
-    font-family: 'Noto Sans Egyptian Hieroglyphs', sans-serif;
-  }
-  
-  .dice-section {
-    text-align: center;
-    margin-top: 10px;
-  }
-  
-  button {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .dice-visual {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  
-  .stick {
-    width: 40px;
-    height: 200px;
-    border-radius: 10px;
-    border: 2px solid #444;
-  }
-  
-  .white-stick {
-    background-color: #fff;
-  }
-  
-  .black-stick {
-    background-color: #222;
-  }
-  
-  .dice-result {
-    font-size: 20px;
-    font-weight: bold;
-    color: #333;
-  }
-  
-  .dice-controls {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-  }
-  
-  .highlight-destination {
-    outline: 3px solid gold;
-    box-shadow: 0 0 10px gold;
-    z-index: 1;
-  }
-  
-  .borne-off-section {
-    display: flex;
-    gap: 40px;
-    margin: 20px 0;
-  }
+  max-width: 800px;
+  margin: 0 auto 20px auto;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.6;
+}
 
-  
-  @keyframes fadeInUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+.rules-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: left;
+  font-size: 16px;
+}
+
+.rules-section ul {
+  padding-left: 20px;
+}
+
+.board-placeholder {
+  margin-top: 20px;
+  text-align: center;
+  font-style: italic;
+  color: #777;
+}
+
+.senet-board {
+  display: grid;
+  grid-template-columns: repeat(10, 60px);
+  grid-template-rows: repeat(3, 60px);
+  gap: 5px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.senet-square {
+  background-color: #f2e8c9;
+  border: 1px solid #aa926f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 16px;
+  color: #333;
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 0 4px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  position: relative;    
+}
+
+.light-square {
+  background-color: #f2e8c9; /* light sand tone */
+}
+
+.dark-square {
+  background-color: #d4b88d; /* darker clay tone */
+}
+
+.rules-section h3 {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #444;
+}
+
+.pawn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  z-index: 2; /* ensure it appears above symbols */
+}
+
+.pawn-a {
+  background-color: hsl(195, 78%, 73%); /* Light player (A) */
+  border: 2px solid #888;
+}
+
+.pawn-b {
+  background-color: #0a470e; /* Dark player (B) */
+  border: 2px solid #aaa;
+}
+
+.house-symbol {
+  font-size: 38px;
+  line-height: 1;
+  margin-top: 4px;
+  text-align: center;
+  font-family: 'Noto Sans Egyptian Hieroglyphs', sans-serif;
+}
+
+.dice-section {
+  text-align: center;
+  margin-top: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.dice-visual {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.stick {
+  width: 40px;
+  height: 200px;
+  border-radius: 10px;
+  border: 2px solid #444;
+}
+
+.white-stick {
+  background-color: #fff;
+}
+
+.black-stick {
+  background-color: #222;
+}
+
+.dice-result {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.dice-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.highlight-destination {
+  outline: 3px solid gold;
+  box-shadow: 0 0 10px gold;
+  z-index: 1;
+}
+
+.borne-off-section {
+  display: flex;
+  gap: 40px;
+  margin: 20px 0;
+}
+
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .win-message {
-    background-color: gold;
-    color: black;
-    padding: 10px 20px;
-    margin-bottom: 20px;
-    font-size: 1.4em;
-    font-weight: bold;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  }
-  
-  .senet-board-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 40px;
-    margin: 10px 0;
-  }
-  
+}
+
+.win-message {
+  background-color: gold;
+  color: black;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  font-size: 1.4em;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.senet-board-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px;
+  margin: 10px 0;
+}
+
 /* Borne-off columns */
 .borne-off-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 60px; /* Ensures width so content doesn't squeeze in */
+display: flex;
+flex-direction: column;
+align-items: center;
+min-width: 60px; /* Ensures width so content doesn't squeeze in */
 }
-  
-  .borne-off-label {
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-  
-  .small-pawn {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    margin: 4px 0; /* <-- Ensures vertical spacing */
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    transform: translateY(10px);
-    animation: fadeInUp 0.5s ease-out forwards;
-  }
-  
-  .turn-indicator {
-    margin-top: 5px;  /* or even 0px if you want it tighter */
-    text-align: center;
-  }
-  
+
+.borne-off-label {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Fixed small-pawn class - removing absolute positioning */
+.small-pawn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 4px 0; /* <-- Ensures vertical spacing */
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+/* Add a new class for borne-off pawns */
+.borne-off-pawn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 4px 0;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  position: static; /* Override absolute positioning from .pawn */
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.turn-indicator {
+  margin-top: 5px;  /* or even 0px if you want it tighter */
+  text-align: center;
+}
+
+.opponent-selector {
+  margin-bottom: 10px;
+  text-align: center;
+  font-size: 16px;
+}
+.opponent-selector select {
+  margin-left: 10px;
+  font-size: 16px;
+}
