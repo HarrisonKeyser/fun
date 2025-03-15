@@ -22,7 +22,7 @@ function HomePage() {
             </div>
             <div className="nav-item">
               <Link to="/senet">
-                <div className="nav-placeholder">Egyptian Senet</div>
+                <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/SenetWebsiteThumbnail.png" alt="Egyptian Senet" />
               </Link>
             </div>
           </div>
@@ -51,7 +51,10 @@ function HomePage() {
 
         {/* DEMOS SECTION */}
         <section className="homepage-section">
-          <h2 className="section-title">Demos for Recruiters</h2>
+          <h2 className="section-title">Data Analysis Demos (for Recruiters)</h2>
+          <p className="recruiter-blurb">
+            This section provides some examples of the type of work you can expect me to do. These are real business case studies and real presentations I have given to real businesses. Data and context have been altered to protect privacy. The type of analysis I am able to do is not limited to the presentations shown here. Enjoy 😁.
+          </p>
           <div className="nav-container">
             <div className="nav-item">
               <Link to="/university-retention">

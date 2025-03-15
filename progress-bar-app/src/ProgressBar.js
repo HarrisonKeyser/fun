@@ -139,7 +139,7 @@ function ProgressBar() {
             max="1000"
             value={clicksToFill}
             onChange={handleSliderChange}
-            style={{ flexGrow: 1, marginLeft: '10px' }} // Use flexGrow for the slider
+            style={{ flexGrow: 1, marginLeft: '10px' }}
           />
           <input
             type="number"
@@ -147,7 +147,7 @@ function ProgressBar() {
             max="1000"
             value={clicksToFill}
             onChange={handleSliderChange}
-            style={{ width: '60px' }} // Adjust as needed
+            style={{ width: '60px' }}
           />
         </div>
       </div>
@@ -157,8 +157,8 @@ function ProgressBar() {
         style={{ 
           marginTop: '10px', 
           textAlign: 'center', 
-          fontSize: `${Math.max(0, progress / 3)}px`, // Calculate font size as one-fifth of progress
-          transition: 'font-size 0.1s ease' // Smooth transition for font size changes
+          fontSize: `${Math.max(0, progress / 3)}px`, // Calculate font size as one-third of progress
+          transition: 'font-size 0.1s ease'
         }}
       >
         {progress.toFixed(2)}%

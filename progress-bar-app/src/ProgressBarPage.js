@@ -1,5 +1,5 @@
 import React from 'react';
-import ProgressBar from './ProgressBar'; // Assuming ProgressBar is a separate component
+import ProgressBar from './ProgressBar';
 import { Link } from 'react-router-dom';
 
 function ProgressBarPage() {
