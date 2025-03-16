@@ -53,7 +53,7 @@ function HomePage() {
         <section className="homepage-section">
           <h2 className="section-title">Data Analysis Demos (for Recruiters)</h2>
           <p className="recruiter-blurb">
-            This section provides some examples of the type of work you can expect me to do. These are real business case studies and real presentations I have given to real businesses. Data and context have been altered to protect privacy. The type of analysis I am able to do is not limited to the presentations shown here. Enjoy 😁.
+            This section provides some examples of the type of work you can expect me to do. These are real business case studies and real presentations which I have given to real businesses. Data and context have been altered to protect privacy. The type of analysis I am able to do is not limited to the presentations shown here. Enjoy 😁.
           </p>
           <div className="nav-container">
             <div className="nav-item">
