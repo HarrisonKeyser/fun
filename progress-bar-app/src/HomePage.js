@@ -15,11 +15,11 @@ function HomePage() {
                 <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/ClickThumbnail.png" alt="Click!" />
               </Link>
             </div>
-            <div className="nav-item">
+            {/*<div className="nav-item">
               <Link to="/fish">
                 <div className="nav-placeholder">Fish Random</div>
               </Link>
-            </div>
+            </div>*/}
             <div className="nav-item">
               <Link to="/senet">
                 <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/SenetWebsiteThumbnail.png" alt="Egyptian Senet" />
@@ -58,7 +58,7 @@ function HomePage() {
           <div className="nav-container">
             <div className="nav-item">
               <Link to="/university-retention">
-                <div className="nav-placeholder">University Retention</div>
+                <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/UniversityWebsiteThumbnail.png" alt="University Retention" />
               </Link>
             </div>
             <div className="nav-item">

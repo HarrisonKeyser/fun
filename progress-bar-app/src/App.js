@@ -7,6 +7,8 @@ import Baseball from './Baseball';
 import HomePage from './HomePage';
 import Yahtzee from './Yahtzee';
 import Senet from './Senet';
+import UniversityRetention from './UniversityRetention';
+import FlightSafety from './FlightSafety';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
         <Route path="/baseball" element={<FadeTransitionWrapper><Baseball /></FadeTransitionWrapper>} />
         <Route path="/yahtzee" element={<FadeTransitionWrapper><Yahtzee /></FadeTransitionWrapper>} />
         <Route path="/senet" element={<FadeTransitionWrapper><Senet /></FadeTransitionWrapper>} />
+        <Route path="/university-retention" element={<FadeTransitionWrapper><UniversityRetention /></FadeTransitionWrapper>} />
+        <Route path="/flight-safety" element={<FadeTransitionWrapper><FlightSafety /></FadeTransitionWrapper>} />
       </Routes>
     </Router>
   );
