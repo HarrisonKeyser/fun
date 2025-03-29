@@ -28,6 +28,9 @@ function FlightSafety() {
           ></iframe>
         </div>
         <div className="transcript">
+            <p>
+            This was an open-ended assignment with no limits or restrictions. The dataset was very small, fitting entirely within a single screenshot, so there was not a lot to work with. However, I still crafted a comprehensive presentation and provided quality insights with data to back them up. The presentation above is a modified adaptation of that assignment, modified to protect client privacy.
+            </p>
           <h2>Assignment from Client:</h2>
           <blockquote>
             <strong>Task:</strong> Derive insights from our internal audit data.
