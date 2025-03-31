@@ -63,7 +63,7 @@ function HomePage() {
             </div>
             <div className="nav-item">
               <Link to="/flight-safety">
-                <div className="nav-placeholder">Flight Safety Trends</div>
+                <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/FlightSafetyThumbnail.png" alt="Flight Safety Trends" />
               </Link>
             </div>
           </div>
