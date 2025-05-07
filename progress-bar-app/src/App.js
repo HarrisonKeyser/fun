@@ -9,6 +9,7 @@ import Yahtzee from './Yahtzee';
 import Senet from './Senet';
 import UniversityRetention from './UniversityRetention';
 import FlightSafety from './FlightSafety';
+import BankBonusesPage from './BankBonuses';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/senet" element={<FadeTransitionWrapper><Senet /></FadeTransitionWrapper>} />
         <Route path="/university-retention" element={<FadeTransitionWrapper><UniversityRetention /></FadeTransitionWrapper>} />
         <Route path="/flight-safety" element={<FadeTransitionWrapper><FlightSafety /></FadeTransitionWrapper>} />
+        <Route path="/bank-bonuses" element={<FadeTransitionWrapper><BankBonusesPage /></FadeTransitionWrapper>} />
       </Routes>
     </Router>
   );

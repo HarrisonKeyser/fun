@@ -25,6 +25,11 @@ function HomePage() {
                 <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/SenetWebsiteThumbnail.png" alt="Egyptian Senet" />
               </Link>
             </div>
+            <div className="nav-item">
+              <Link to="/bank-bonuses">
+                <div className="nav-placeholder">Bank Bonuses</div>
+              </Link>
+            </div>
           </div>
         </section>
 
