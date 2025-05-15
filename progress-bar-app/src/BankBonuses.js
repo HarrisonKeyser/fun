@@ -20,8 +20,10 @@ function BankBonusesPage() {
       thumbnail: 'https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/currentfavicon.avif',
       checklist: [
         'Sign up for a new Current account using the link above or by applying code HARRISOK763.',
-        'Receive one or more qualifying direct deposits (e.g., from an employer or government payer) totaling at least $200 within 45 days of opening your account.',
-        'Keep your account open and in good standing until the $100 bonus is paid (typically within 10 business days after your qualifying deposit).'
+        'Receive one or more qualifying direct deposits (e.g., from an employer or government payer) into your new checking account totaling at least $200 within 45 days of opening your account.',
+        'Keep your account open and in good standing until the $100 bonus is paid, which will arrive within 10 business days after your qualifying deposit.',
+        '(optional) Once you receive your bonus, you can safely switch your direct deposit settings back to your primary bank and transfer all money out of your Current account.',
+        '(optional) Ninety days after opening your account, you may safely close your account if you wish. You are now $100 richer.'
       ],
       quickFacts: {
         bonusRequirementSummary: 'Direct deposit $200 within 45 days for $100 bonus',
@@ -59,9 +61,9 @@ Additional Terms:
 
       <div className="bank-bonuses-page">
         <div className="page-header">
-          <h1>Bank Account Bonuses</h1>
+          <h1>Bank Bonuses</h1>
           <p className="header-summary">
-            Easy money for opening new bank accounts. No fees, low effort, reliable returns.
+            My Favorite Side Hustle
           </p>
         </div>
 
@@ -71,7 +73,7 @@ Additional Terms:
               <div key={bonus.id} className="bonus-item">
                 <div className="bonus-header">
                   <img src={bonus.thumbnail} alt={`${bonus.bankName} Bonus Thumbnail`} className="bonus-thumbnail-img" />
-                  <h3>{bonus.bankName} - Earn {bonus.bonusAmount}</h3>
+                  <h3>{bonus.bankName} - Earn {bonus.bonusAmount} (Beginner Friendly Bonus)</h3>
                 </div>
                 
               {/* MODIFICATION START: Wrap prompt and button */}
@@ -86,7 +88,7 @@ Additional Terms:
                 {/* MODIFICATION END */}
 
                 <div className="bonus-details">
-                  <h4>How to Get Your {bonus.bonusAmount}:</h4>
+                  <h4>How to Get {bonus.bonusAmount}:</h4>
                   <ol className="checklist">
                     {bonus.checklist.map((item, index) => <li key={index}>{item}</li>)}
                   </ol>

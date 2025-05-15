@@ -27,7 +27,7 @@ function HomePage() {
             </div>
             <div className="nav-item">
               <Link to="/bank-bonuses">
-                <div className="nav-placeholder">Bank Bonuses</div>
+                <img src="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/WebsiteThumbnailBonuses.png" alt="Bank Bonuses" />
               </Link>
             </div>
           </div>
