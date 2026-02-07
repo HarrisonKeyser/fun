@@ -76,7 +76,7 @@ function HomePage() {
       </header>
 
       <footer className="site-footer">
-        © 2025. A website by Harrison Keyser
+        © 2026. A website by Harrison Keyser
       </footer>
     </div>
   );
