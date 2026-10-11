@@ -55,7 +55,7 @@ src/
   styles/global.css     Site-wide styles
 public/                 Files copied as-is (favicon, audio, CNAME for the custom domain)
 scripts/                Build helper that makes every page address work on GitHub Pages
-drafts/                 Unfinished work, not part of the site
+drafts/                 Unfinished work, not part of the site (e.g. the Baseball post)
 .github/workflows/      The automatic publishing setup
 ```
 
