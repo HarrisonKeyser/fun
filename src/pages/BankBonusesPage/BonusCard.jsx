@@ -1,8 +1,19 @@
 import styles from './BonusCard.module.css';
 
 export default function BonusCard({ bonus }) {
-  const { bankName, bonusAmount, label, referralCode, signUpUrl, logo, steps, quickFacts, fullTerms } =
-    bonus;
+  const {
+    bankName,
+    bonusAmount,
+    label,
+    referralCode,
+    signUpUrl,
+    logo,
+    steps,
+    quickFacts,
+    termsUrl,
+    termsEffectiveDate,
+    termsHighlights,
+  } = bonus;
 
   return (
     <article className={styles.card}>
@@ -45,7 +56,22 @@ export default function BonusCard({ bonus }) {
           <span className={styles.showLabel}>Show</span>
           <span className={styles.hideLabel}>Hide</span> Full Terms
         </summary>
-        <div className={styles.termsText}>{fullTerms}</div>
+        <div className={styles.termsText}>
+          <p>
+            Key points from {bankName}'s referral terms
+            {termsEffectiveDate && ` (effective ${termsEffectiveDate})`}:
+          </p>
+          <ul>
+            {termsHighlights.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+          <p>
+            <a href={termsUrl} target="_blank" rel="noopener noreferrer">
+              Read the full terms on {bankName}'s website
+            </a>
+          </p>
+        </div>
       </details>
     </article>
   );

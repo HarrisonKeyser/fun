@@ -1,0 +1,39 @@
+# One-click undo: puts the pre-2026-rebuild version of the site back online.
+#
+# How to use: GitHub repo → Actions tab → "Restore old site" → "Run workflow".
+# The old site is live again within a few minutes.
+#
+# To switch back to the new site: Actions tab → "Deploy site" → "Run workflow".
+# (Any new change pushed to main also republishes the new site.)
+#
+# The old site is kept safe under the tag `old-site-build`, so it can't be lost.
+
+name: Restore old site
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the saved copy of the old site
+        uses: actions/checkout@v5
+        with:
+          ref: old-site-build
+          path: old-site
+
+      - name: Publish it to the gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./old-site
+          exclude_assets: '.git,.github'
+          cname: harrisonkeyser.fun

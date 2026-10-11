@@ -7,23 +7,23 @@ import { imageUrl } from './images.js';
 
 export const BANK_BONUSES = [
   {
-    id: 'current-q2-2025',
+    id: 'current-2026',
     bankName: 'Current',
     bonusAmount: '$100',
     label: 'Beginner Friendly Bonus',
     referralCode: 'HARRISOK763',
     signUpUrl:
-      'https://current.com/get-started/?creator_code=HARRISOK763&impression_id=af0069d1-9585-4586-b8fb-5cb529bc3ec9',
+      'https://current.com/get-started/?creator_code=HARRISOK763&impression_id=5656c28e-0a9a-4771-a885-1dfb4df70f2b',
     logo: imageUrl('currentfavicon.avif'),
     steps: [
       'Sign up for a new Current account using the link above or by applying code HARRISOK763.',
-      'Receive one or more qualifying direct deposits (e.g., from an employer or government payer) into your new checking account totaling at least $200 within 45 days of opening your account.',
-      'Keep your account open and in good standing until the $100 bonus is paid, which will arrive within 10 business days after your qualifying deposit.',
+      'Receive one or more qualifying direct deposits (e.g., from an employer or government payer) into your new checking account totaling at least $1,500 within 35 days of opening your account.',
+      'Keep your account open and in good standing until the $100 bonus is paid, which will arrive within 10 business days after your qualifying deposits reach $1,500.',
       '(optional) Once you receive your bonus, you can safely switch your direct deposit settings back to your primary bank and transfer all money out of your Current account.',
       '(optional) Ninety days after opening your account, you may safely close your account if you wish. You are now $100 richer.',
     ],
     quickFacts: [
-      { label: 'Bonus Requirement Summary', value: 'Direct deposit $200 within 45 days for $100 bonus' },
+      { label: 'Bonus Requirement Summary', value: 'Direct deposit $1,500 within 35 days for $100 bonus' },
       { label: 'Monthly Fees', value: 'None' },
       { label: 'Credit Inquiry', value: 'None' },
       { label: 'Availability', value: 'Nationwide (USA)' },
@@ -31,21 +31,14 @@ export const BANK_BONUSES = [
       { label: 'Early Closure Fee', value: 'None' },
       { label: 'Account Type', value: 'Personal Checking Account' },
     ],
-    fullTerms: `Current Referral Program
-
-Effective 4/22/25
-
-For existing Current Account users (“Referrer”) to qualify for a $100 referral reward (the “Referral Reward”) and for new Current Account users (“Referred”) to qualify for the Referral Reward, the following conditions must be met:
-
-1. Referred users must sign up for a Current Account through the unique referral link or apply the unique referral code provided by the Referrer, and must be new, first-time Current users.
-
-2. Referred users must receive at least $200 in Eligible Payroll Deposits into their Current Account within the first 45 days of opening their Current Account.  An “Eligible Payroll Deposit” means a recurring deposit of a Current Account user’s wages or compensation from sources such as their employer, payroll provider or government payer, including where they are acting as an independent contractor. Certain deposits do not qualify as Eligible Payroll Deposits, including non-direct deposit ACH transfers, inter- or intra-bank peer-to-peer transfers, transfers made to debit cards from digital wallets or P2P services (PayPal, Venmo, Cash App, Zelle, Google Pay, Facebook Pay, or other similar services), mobile check deposits, cash deposits, and one-time direct deposits (such as tax refunds). Current retains full discretion to determine qualification for Eligible Payroll Deposits and for the Referral Reward.
-
-3. The Referral Reward should be paid to the Referred and Referrer’s Current Accounts within ten (10) business days after a qualifying Eligible Payroll Deposit is first deposited into the Referred’s Account, although delays may occur. To receive the Referral Reward, both Referrer and Referred’s Accounts must not be closed or restricted, and must be in good standing at the time of payment of the Referral Reward.
-
-Additional Terms:
-• The Referral Reward cannot be combined with any other enrollment bonuses.
-• Referrers may earn no more than $1,000.00 in Referral Rewards per calendar year.`,
+    termsUrl: 'https://current.com/tiered-referral-program-terms-and-conditions-1-500/',
+    termsEffectiveDate: 'August 12, 2026',
+    termsHighlights: [
+      'Only new, first-time Current customers who sign up with a referral link or code qualify.',
+      'Only recurring paychecks or government payments count. Transfers from other banks or apps (Venmo, Zelle, PayPal, etc.), mobile check deposits, cash, and one-time deposits like tax refunds do not.',
+      'This bonus cannot be combined with other sign-up bonuses.',
+      'Current can change or end the program at any time, and can take back rewards it believes were earned through error, fraud, or abuse.',
+    ],
   },
 ];
 
