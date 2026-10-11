@@ -3,8 +3,6 @@
   To add an offer, copy an entry in BANK_BONUSES and change the details.
   To retire one, delete its entry (the page shows a message when the list is empty).
 */
-import { imageUrl } from './images.js';
-
 export const BANK_BONUSES = [
   {
     id: 'current-2026',
@@ -14,7 +12,7 @@ export const BANK_BONUSES = [
     referralCode: 'HARRISOK763',
     signUpUrl:
       'https://current.com/get-started/?creator_code=HARRISOK763&impression_id=5656c28e-0a9a-4771-a885-1dfb4df70f2b',
-    logo: imageUrl('currentfavicon.avif'),
+    logo: '/images/logos/current.avif',
     steps: [
       'Sign up for a new Current account using the link above or by applying code HARRISOK763.',
       'Receive one or more qualifying direct deposits (e.g., from an employer or government payer) into your new checking account totaling at least $1,500 within 35 days of opening your account.',
