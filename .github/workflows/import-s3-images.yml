@@ -1,0 +1,50 @@
+# ONE-TIME HELPER (deleted after use): copies the site's images out of the
+# harrisonkeyserfun S3 bucket and commits them to this branch.
+
+name: Import images from S3
+
+on:
+  push:
+    branches: [move-images-from-s3]
+    paths: [.github/workflows/import-s3-images.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: List everything in the bucket (for the record)
+        run: |
+          curl -sf "https://harrisonkeyserfun.s3.us-east-2.amazonaws.com/?list-type=2" \
+            | grep -oE '<Key>[^<]+</Key><LastModified>[^<]+</LastModified><ETag>[^<]+</ETag><Size>[0-9]+' \
+            | sed -E 's#<Key>([^<]+)</Key><LastModified>([^<]+)</LastModified><ETag>[^<]+</ETag><Size>([0-9]+)#\1  \3 bytes  \2#' \
+            | tee s3-bucket-listing.txt \
+            || echo "Bucket listing is not public (that's fine)." | tee s3-bucket-listing.txt
+
+      - name: Download the images
+        run: |
+          set -e
+          base="https://harrisonkeyserfun.s3.us-east-2.amazonaws.com"
+          mkdir -p s3-import/site s3-import/drafts
+          for f in ClickThumbnail.png SenetWebsiteThumbnail.png WebsiteThumbnailBonuses.png \
+                   YahtzeeThumbnailwebsiteversion.png UniversityWebsiteThumbnail.png \
+                   FlightSafetyThumbnail.png currentfavicon.avif; do
+            curl -sfL "$base/$f" -o "s3-import/site/$f"
+          done
+          for f in BaseballThumbnailConstruction.png BaseballThumbnailv1.png arrow-go-back.svg; do
+            curl -sfL "$base/$f" -o "s3-import/drafts/$f" || echo "skipped $f"
+          done
+          mv s3-bucket-listing.txt s3-import/
+          ls -la s3-import/site s3-import/drafts
+
+      - name: Commit them to this branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add s3-import
+          git commit -m "Import images from S3"
+          git push
