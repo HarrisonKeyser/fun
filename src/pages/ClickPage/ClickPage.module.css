@@ -1,0 +1,59 @@
+.title {
+  margin: 24px 0;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 400;
+}
+
+/* The grey bar you click */
+.track {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 0;
+  background-color: #ddd;
+  cursor: pointer;
+  touch-action: manipulation; /* no double-tap zoom when tapping quickly on phones */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The green fill */
+.fill {
+  display: block;
+  height: 48px;
+  background-color: green;
+  transition: width 0.1s ease;
+}
+
+.resetButton {
+  margin-top: 20px;
+}
+
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 20px;
+}
+
+.settingsLabel {
+  flex: 0 0 auto;
+}
+
+.slider {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.numberInput {
+  width: 72px;
+  padding: 4px 6px;
+}
+
+.percent {
+  margin-top: 10px;
+  text-align: center;
+  line-height: 1.2;
+  transition: font-size 0.1s ease;
+}

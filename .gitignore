@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Editor / OS clutter
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+npm-debug.log*
+
+# Local environment files
+.env*.local

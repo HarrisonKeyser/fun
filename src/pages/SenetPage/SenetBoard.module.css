@@ -1,0 +1,156 @@
+/*
+  Wide screens: [blue tray] [board] [green tray]
+  Phones:       board on top, both trays underneath
+*/
+.boardArea {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 645px) 60px;
+  grid-template-areas: 'blue board green';
+  justify-content: center;
+  align-items: start;
+  gap: 40px;
+  margin: 16px 0;
+}
+
+.board {
+  grid-area: board;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: clamp(2px, 0.8vw, 5px);
+}
+
+.square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1px solid #aa926f;
+  border-radius: 4px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  container-type: inline-size;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.light {
+  background-color: #f2e8c9; /* sand */
+}
+
+.dark {
+  background-color: #d4b88d; /* clay */
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.destination {
+  z-index: 1;
+  outline: 3px solid gold;
+  box-shadow: 0 0 10px gold;
+}
+
+.symbol {
+  font-family: 'Noto Sans Egyptian Hieroglyphs', sans-serif;
+  font-size: 63cqi;
+  line-height: 1;
+  color: #333;
+}
+
+.pawn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2; /* above the hieroglyph */
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.blue {
+  background-color: hsl(195, 78%, 73%);
+  border: 2px solid #888;
+}
+
+.green {
+  background-color: #0a470e;
+  border: 2px solid #aaa;
+}
+
+/* Pawns that can move this turn get a soft glow so you know what to tap. */
+.movable {
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.55), 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+.selected {
+  outline: 2px solid gold;
+  outline-offset: 1px;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+/* Borne-off trays */
+.tray {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.blueTray {
+  grid-area: blue;
+}
+
+.greenTray {
+  grid-area: green;
+}
+
+.trayPawn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  animation: rise-in 0.5s ease-out both;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 860px) {
+  .boardArea {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'board board'
+      'blue green';
+    gap: 12px;
+  }
+
+  .tray {
+    flex-direction: row;
+  }
+
+  .blueTray {
+    justify-content: flex-start;
+  }
+
+  .greenTray {
+    justify-content: flex-end;
+  }
+
+  .pawn {
+    width: 62%;
+    height: 62%;
+  }
+}

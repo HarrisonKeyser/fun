@@ -1,0 +1,136 @@
+/*
+  Site-wide styles and design tokens.
+  Change a color or size here and it updates everywhere.
+*/
+
+:root {
+  /* Colors */
+  --color-background: #ecf1fb;
+  --color-surface: rgba(255, 255, 255, 0.55);
+  --color-text: #222;
+  --color-text-muted: #555;
+  --color-text-subtle: #777;
+  --color-heading: #333;
+  --color-accent: #003366;
+  --color-border: rgba(0, 0, 0, 0.12);
+  --color-success: #28a745;
+  --color-success-hover: #218838;
+
+  /* Type */
+  --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-mono: ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace;
+
+  /* Layout */
+  --content-width: 800px;
+  --page-gutter: 16px;
+  --radius-small: 4px;
+  --radius: 8px;
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.14);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+iframe,
+video {
+  max-width: 100%;
+}
+
+img {
+  display: block;
+  height: auto;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.25;
+  color: var(--color-heading);
+}
+
+a {
+  color: var(--color-accent);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid #4a7fd4;
+  outline-offset: 2px;
+}
+
+/* Generic button used across pages */
+.button {
+  display: inline-block;
+  padding: 10px 20px;
+  border: 1px solid #b9c2d3;
+  border-radius: var(--radius-small);
+  background-color: #fff;
+  color: var(--color-text);
+  font-size: 16px;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  background-color: #f4f6fb;
+  border-color: #8e9ab0;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

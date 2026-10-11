@@ -1,0 +1,23 @@
+.rules {
+  max-width: var(--content-width);
+  margin: 32px auto 0;
+  text-align: left;
+}
+
+.rules h2 {
+  text-align: center;
+}
+
+.rules h3 {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #444;
+}
+
+.rules ul {
+  padding-left: 20px;
+}
+
+.rules li {
+  margin-bottom: 4px;
+}

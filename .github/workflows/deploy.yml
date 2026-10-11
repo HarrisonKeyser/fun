@@ -1,0 +1,40 @@
+# Publishes the site every time something changes on the main branch.
+# It runs the tests, builds the site, and puts the result on the gh-pages branch,
+# which is what GitHub Pages serves at harrisonkeyser.fun.
+# Watch it run (or see why it failed) under the repository's "Actions" tab.
+
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # adds a "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Publish to the gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          cname: harrisonkeyser.fun

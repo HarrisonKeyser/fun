@@ -1,0 +1,22 @@
+.card {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: var(--radius-small);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.image {
+  width: 100%;
+  border-radius: inherit;
+}
+
+.unavailable {
+  cursor: default;
+}
