@@ -13,7 +13,8 @@ import {
   throwSticks,
 } from './senetRules.js';
 import { chooseComputerMove } from './computerPlayer.js';
-import { ACTIONS, createGame, OPPONENTS, senetReducer } from './senetGame.js';
+import { ACTIONS, createGame, EVENTS, OPPONENTS, senetReducer } from './senetGame.js';
+import { playSenetSound } from './senetSounds.js';
 import styles from './SenetPage.module.css';
 
 // Pauses so people can follow what just happened.
@@ -21,6 +22,17 @@ const COMPUTER_ROLL_DELAY_MS = 800;
 const COMPUTER_PICK_DELAY_MS = 1000;
 const COMPUTER_MOVE_DELAY_MS = 800;
 const NO_MOVES_DELAY_MS = 1000;
+
+const SOUND_FOR_EVENT = {
+  [EVENTS.ROLL]: 'throwSticks',
+  [EVENTS.SELECT]: 'select',
+  [EVENTS.MOVE]: 'move',
+  [EVENTS.CAPTURE]: 'capture',
+  [EVENTS.WATER]: 'water',
+  [EVENTS.BEAR_OFF]: 'bearOff',
+  [EVENTS.WIN]: 'win',
+};
+const NO_MOVES_SOUND_DELAY_MS = 350; // let the sticks land before the "no moves" thud
 
 function randomColor() {
   return Math.random() < 0.5 ? BLUE : GREEN;
@@ -40,6 +52,19 @@ export default function SenetPage() {
   const isComputerTurn = vsComputer && currentPlayer === computerColor && !winner;
   const canAct = !isComputerTurn && !winner;
   const hasNoMoves = roll !== null && legalMoves.length === 0;
+
+  // Sound effects for whatever just happened, for both human and computer turns.
+  const { lastEvent } = game;
+  useEffect(() => {
+    if (!lastEvent) return undefined;
+    if (lastEvent.type === EVENTS.NO_MOVES) {
+      playSenetSound('throwSticks');
+      const timer = setTimeout(() => playSenetSound('noMoves'), NO_MOVES_SOUND_DELAY_MS);
+      return () => clearTimeout(timer);
+    }
+    playSenetSound(SOUND_FOR_EVENT[lastEvent.type]);
+    return undefined;
+  }, [lastEvent]);
 
   // No legal moves: show the roll briefly, then pass the turn.
   useEffect(() => {
@@ -93,7 +118,7 @@ export default function SenetPage() {
   }
 
   return (
-    <PageLayout title="Egyptian Senet" width="wide">
+    <PageLayout title="Egyptian Senet" width="wide" showSoundToggle>
       <h1 className={styles.title}>Egyptian Senet</h1>
 
       {winner && (

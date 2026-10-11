@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Confetti from 'react-confetti';
 import PageLayout from '../../components/PageLayout.jsx';
 import useWindowSize from '../../hooks/useWindowSize.js';
+import { playSound, preloadSounds } from '../../audio/soundPlayer.js';
 import styles from './ClickPage.module.css';
 
 // One note per click, climbing a C-major scale and looping back around.
@@ -14,13 +15,6 @@ const CELEBRATION_MS = 5000;
 const MIN_CLICKS = 1;
 const MAX_CLICKS = 1000;
 const DEFAULT_CLICKS = 10;
-
-function playSound(src) {
-  const audio = new Audio(src);
-  audio.play().catch(() => {
-    // Browsers can block audio until the visitor interacts with the page; safe to ignore.
-  });
-}
 
 export default function ClickPage() {
   const [clicksToFill, setClicksToFill] = useState(DEFAULT_CLICKS);
@@ -35,6 +29,11 @@ export default function ClickPage() {
   const progress = Math.min(100, (clicks / clicksToFill) * 100);
   const isFull = clicks >= clicksToFill;
   const canReset = isFull && !celebrating;
+
+  // Load every sound as soon as the page opens, so even the first click plays instantly.
+  useEffect(() => {
+    preloadSounds([...NOTE_SOUNDS, CELEBRATION_SOUND]);
+  }, []);
 
   // After a few seconds of celebrating, let the confetti wind down and offer a reset.
   useEffect(() => {
@@ -51,7 +50,18 @@ export default function ClickPage() {
     });
   }
 
-  function handleClick() {
+  // Respond the moment a finger or mouse button goes down, not when it's released.
+  function handlePointerDown(event) {
+    if (event.button !== 0) return; // left mouse button / touch / pen only
+    fillBar();
+  }
+
+  // Keyboard presses (Enter / Space) arrive as clicks with no pointer behind them.
+  function handleKeyboardClick(event) {
+    if (event.detail === 0) fillBar();
+  }
+
+  function fillBar() {
     if (isFull) return;
 
     playSound(NOTE_SOUNDS[noteIndex.current % NOTE_SOUNDS.length]);
@@ -84,7 +94,7 @@ export default function ClickPage() {
   }
 
   return (
-    <PageLayout title="Click!">
+    <PageLayout title="Click!" showSoundToggle>
       {showConfetti && (
         <Confetti
           width={width}
@@ -100,7 +110,8 @@ export default function ClickPage() {
       <button
         type="button"
         className={styles.track}
-        onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onClick={handleKeyboardClick}
         aria-label="Click to fill the bar"
       >
         <span ref={fillRef} className={styles.fill} style={{ width: `${progress}%` }} />
