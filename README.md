@@ -36,7 +36,7 @@ If an Actions run shows a red ✗, the live site is left as it was. Click into t
 | Site-wide colors, fonts, spacing            | `src/styles/global.css`               |
 | Browser-tab title, link-preview text        | `index.html`                          |
 
-Images are hosted in the `harrisonkeyserfun` AWS S3 bucket (see `src/content/images.js`). Sounds are in `public/audio/`.
+Images are in `public/images/` and sounds are in `public/audio/`.
 
 ## Project layout
 

@@ -2,9 +2,9 @@
   What shows up on the home page, section by section.
   To add a project: add an entry to a section's `projects` list.
   Leave `path` out (or set it to null) to show a thumbnail that isn't clickable yet.
+  Thumbnails live in public/images/thumbnails/ (800×450 WebP works well).
 */
 import { ROUTE_PATHS } from '../routePaths.js';
-import { imageUrl } from './images.js';
 
 export const HOME_SECTIONS = [
   {
@@ -14,17 +14,17 @@ export const HOME_SECTIONS = [
       {
         title: 'Click!',
         path: ROUTE_PATHS.click,
-        image: imageUrl('ClickThumbnail.png'),
+        image: '/images/thumbnails/click.webp',
       },
       {
         title: 'Egyptian Senet',
         path: ROUTE_PATHS.senet,
-        image: imageUrl('SenetWebsiteThumbnail.png'),
+        image: '/images/thumbnails/senet.webp',
       },
       {
         title: 'Bank Bonuses',
         path: ROUTE_PATHS.bankBonuses,
-        image: imageUrl('WebsiteThumbnailBonuses.png'),
+        image: '/images/thumbnails/bank-bonuses.webp',
       },
     ],
   },
@@ -35,7 +35,7 @@ export const HOME_SECTIONS = [
       {
         title: 'How Many Games of Yahtzee! Are There?',
         path: ROUTE_PATHS.yahtzee,
-        image: imageUrl('YahtzeeThumbnailwebsiteversion.png'),
+        image: '/images/thumbnails/yahtzee.webp',
       },
     ],
   },
@@ -48,12 +48,12 @@ export const HOME_SECTIONS = [
       {
         title: 'University Retention',
         path: ROUTE_PATHS.universityRetention,
-        image: imageUrl('UniversityWebsiteThumbnail.png'),
+        image: '/images/thumbnails/university-retention.webp',
       },
       {
         title: 'Flight Safety Trends',
         path: ROUTE_PATHS.flightSafety,
-        image: imageUrl('FlightSafetyThumbnail.png'),
+        image: '/images/thumbnails/flight-safety.webp',
       },
     ],
   },
