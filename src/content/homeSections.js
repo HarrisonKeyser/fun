@@ -33,11 +33,6 @@ export const HOME_SECTIONS = [
     title: 'Learn',
     projects: [
       {
-        title: 'Predicting Baseball Home Runs (under construction)',
-        path: null,
-        image: imageUrl('BaseballThumbnailConstruction.png'),
-      },
-      {
         title: 'How Many Games of Yahtzee! Are There?',
         path: ROUTE_PATHS.yahtzee,
         image: imageUrl('YahtzeeThumbnailwebsiteversion.png'),

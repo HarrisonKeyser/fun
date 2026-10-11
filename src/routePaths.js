@@ -11,5 +11,4 @@ export const ROUTE_PATHS = {
   yahtzee: '/yahtzee',
   universityRetention: '/university-retention',
   flightSafety: '/flight-safety',
-  baseball: '/baseball',
 };

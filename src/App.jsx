@@ -8,7 +8,6 @@ import ClickPage from './pages/ClickPage/ClickPage.jsx';
 import SenetPage from './pages/SenetPage/SenetPage.jsx';
 import BankBonusesPage from './pages/BankBonusesPage/BankBonusesPage.jsx';
 import CaseStudyPage from './pages/CaseStudyPage/CaseStudyPage.jsx';
-import ComingSoonPage from './pages/ComingSoonPage/ComingSoonPage.jsx';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage.jsx';
 
 export default function App() {
@@ -29,15 +28,6 @@ export default function App() {
           />
         ))}
 
-        <Route
-          path={ROUTE_PATHS.baseball}
-          element={
-            <ComingSoonPage
-              title="Predicting Home Runs in Baseball"
-              description="Predicting home runs in a baseball game using a Poisson distribution."
-            />
-          }
-        />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
