@@ -1,0 +1,35 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  animation: fade-in 250ms ease-in;
+}
+
+.topBar {
+  padding: 16px var(--page-gutter) 0;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px var(--page-gutter) 48px;
+  text-align: center;
+}
+
+.narrow {
+  max-width: calc(var(--content-width) + 2 * var(--page-gutter));
+}
+
+.wide {
+  max-width: calc(1280px + 2 * var(--page-gutter));
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

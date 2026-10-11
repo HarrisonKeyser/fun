@@ -1,0 +1,15 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -7px;
+  border-radius: 50%;
+  color: var(--color-heading);
+  transition: background-color 0.15s ease;
+}
+
+.backLink:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}

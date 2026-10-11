@@ -1,0 +1,69 @@
+.title {
+  margin: 8px 0 16px;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+}
+
+.intro {
+  max-width: var(--content-width);
+  margin: 0 auto 20px;
+  font-size: 18px;
+}
+
+.winMessage {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background-color: gold;
+  color: #000;
+  font-size: 1.4em;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.setup select {
+  padding: 8px;
+  border-radius: var(--radius-small);
+}
+
+.youAre {
+  margin: 8px 0 0;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.status {
+  min-height: 1.6em;
+  margin: 8px 0 0;
+  font-size: 20px;
+}
+
+.turn {
+  margin: 4px 0 0;
+}
+
+.blueText,
+.greenText {
+  font-weight: bold;
+}
+
+.blueText {
+  color: hsl(195, 70%, 42%);
+}
+
+.greenText {
+  color: #0a470e;
+}
