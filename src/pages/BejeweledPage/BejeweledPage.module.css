@@ -53,6 +53,24 @@
   color: var(--color-text-muted);
 }
 
+.figure {
+  max-width: 960px;
+  margin: 32px auto 0;
+}
+
+.figure img {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.figure figcaption {
+  max-width: 720px;
+  margin: 10px auto 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
 .video {
   max-width: 900px;
   margin: 32px auto 0;

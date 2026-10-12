@@ -21,6 +21,15 @@ export const BEJEWELED_BOT = {
     { value: '0', label: 'changes to the game' },
   ],
 
+  figure: {
+    src: '/images/bejeweled/debug-view.webp',
+    width: 1400,
+    height: 825,
+    alt: 'The game board with a colored box drawn around every gem, a confidence percentage in each, and a yellow arrow marking the recommended swap.',
+    caption:
+      'The first version, the “advisor,” reading a real board on level 28. Each box is the color it read for that cell, with its confidence underneath. The arrow is the move it recommended.',
+  },
+
   videoUrl: null,
   videoTitle: 'The Bejeweled bot playing',
 

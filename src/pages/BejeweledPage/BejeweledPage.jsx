@@ -5,7 +5,7 @@ import { BEJEWELED_BOT, BEJEWELED_REPO_URL } from '../../content/bejeweledBot.js
 import styles from './BejeweledPage.module.css';
 
 export default function BejeweledPage() {
-  const { title, tagline, intro, stats, videoUrl, videoTitle, demo, pipeline, phases, problems, code } =
+  const { title, tagline, intro, stats, figure, videoUrl, videoTitle, demo, pipeline, phases, problems, code } =
     BEJEWELED_BOT;
 
   return (
@@ -29,6 +29,11 @@ export default function BejeweledPage() {
           </li>
         ))}
       </ul>
+
+      <figure className={styles.figure}>
+        <img src={figure.src} width={figure.width} height={figure.height} alt={figure.alt} loading="lazy" />
+        <figcaption>{figure.caption}</figcaption>
+      </figure>
 
       {videoUrl && (
         <div className={styles.video}>
