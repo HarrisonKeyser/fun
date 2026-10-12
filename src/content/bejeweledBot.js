@@ -10,14 +10,16 @@ export const BEJEWELED_BOT = {
   tagline: 'I built a robot to play 200 hours of Bejeweled 2 for me.',
 
   intro: [
-    'Beating Endless mode in Bejeweled 2 on the Xbox 360 means clearing 280 levels, which takes about 200 hours. The game’s save system is unreliable: I lost my progress about 150 hours in, then again about 50 hours into my second try.',
-    'For the third attempt, I built a machine to play for me. It doesn’t touch the game’s code. It watches the TV signal, decides on a move, and presses the buttons, just like a person would. It played unattended, day and night, and beat all 280 levels.',
+    'Beating Endless mode in Bejeweled 2 on the Xbox 360 means clearing 280 levels. That requires scoring about 60 million points, which takes most humans between 200 and 300 hours of matching geometric gems. As a hardcore completionist, I was determined to earn the Xbox 360 achievement for completing Endless mode.',
+    'Unfortunately, Bejeweled 2 for the Xbox 360 has one of the most asinine saving systems you have ever encountered, or will ever encounter, in a video game. When you load your profile, the game loads your save and deletes it. It doesn’t save your progress to your profile again until you quit through the main menu. So if the game crashes, the power goes out, the dog trips over the power cord, or a sibling turns off the Xbox while Bejeweled 2 is running, you permanently lose all of your progress! I slowly made progress over the years, but I wasn’t immune to the random events of life that inevitably happen over a long stretch of time. I lost my progress for the first time about 150 hours in, then again about 50 hours into my second try.',
+    'By the time I lost my progress for the second time, it had been over 15 years since I first launched the game, and I had a data science degree and a real adult income. I also didn’t have dozens of hours of free time per week like I did as a kid. So I built a robot to finally beat Bejeweled for me. I wanted to do it without modding the Xbox or the game, because that would be cheating, obviously.',
+    'Instead, my robot watches the TV signal, decides on a move, and presses the buttons. To the Xbox and the game itself, it’s indistinguishable from a real person playing. It played unattended, day and night, and beat all 280 levels in about 10 days of cumulative play, comparable to how long it takes most humans.',
   ],
 
   stats: [
     { value: '280', label: 'levels beaten' },
     { value: '~200', label: 'hours of unattended play' },
-    { value: '~250k', label: 'points per hour' },
+    { value: '~300k', label: 'points per hour' },
     { value: '0', label: 'changes to the game' },
   ],
 
@@ -35,7 +37,7 @@ export const BEJEWELED_BOT = {
 
   demo: {
     heading: 'Watch it think',
-    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot read the board from video; this one gets it straight from the page.',
+    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot read the board from video; this one gets it straight from the page.',
   },
 
   pipeline: {
@@ -44,8 +46,12 @@ export const BEJEWELED_BOT = {
       { name: 'Xbox 360', detail: 'Runs the unmodified game' },
       { name: 'Capture card', detail: 'Sends the picture to a laptop, about 3 seconds late' },
       { name: 'Laptop', detail: 'Python and OpenCV read the board and choose a move' },
-      { name: 'Raspberry Pi Zero 2W', detail: 'Gets the move over Wi-Fi and poses as a USB keyboard' },
-      { name: 'Cronus Zen', detail: 'Turns arrow keys and Space into D-pad and A-button presses' },
+      { name: 'Raspberry Pi Zero 2W', detail: 'The translator: gets each move over Wi-Fi and types it as keyboard presses' },
+      { name: 'Cronus Zen', detail: 'Poses as a standard Xbox controller and turns keys into D-pad and A presses' },
+    ],
+    explainer: [
+      'The Cronus Zen is what lets an unmodified Xbox take orders from a computer. It plugs straight into the Xbox and presents itself as a standard Xbox controller, so the console accepts its inputs like any other controller’s. It also translates keyboard input into gamepad input: the arrow keys become the D-pad, and Space becomes the A button.',
+      'The catch is that the Zen only accepts two kinds of input: moves preprogrammed onto the Zen itself, or a keyboard plugged into it. It can’t take commands from a Python program directly. That’s why the Raspberry Pi Zero 2W is there. It’s the Python-to-Zen translator: the laptop sends it each move over Wi-Fi, and the Pi, plugged into the Zen and posing as a USB keyboard, types the matching keys.',
     ],
     loopNote: 'The Zen is plugged into the Xbox, so the loop is closed: the bot sees the result of its move and goes again.',
   },
@@ -53,7 +59,7 @@ export const BEJEWELED_BOT = {
   phases: [
     {
       name: 'See',
-      text: 'Screenshot the capture window, cut the board into 64 cells, and classify each one by counting pixels inside hand-tuned color ranges.',
+      text: 'Grab a frame of the TV picture, cut the board into 64 cells, and classify each one by counting pixels inside hand-tuned color ranges.',
     },
     {
       name: 'Think',
@@ -85,12 +91,12 @@ export const BEJEWELED_BOT = {
         text: 'If a button press gets dropped, the cursor is one cell off, every swap misses, and the bot keeps choosing the same move. Three identical attempts in a row trigger the corner reset.',
       },
       {
-        title: 'A 3-second delay',
-        text: 'My 2012-era capture card shows the game about 3 seconds late, so fixed timers either wasted time or acted on stale frames. The bot reacts to what it sees instead: it acts, waits for the board to change, then waits for it to settle.',
+        title: 'Knowing when to move',
+        text: 'The original program screenshotted the board on a looping timer and searched for the best move after each interval. That made it much slower and more error-prone than it already was: every move waited out a timer long enough for the longest cascade, and a timer that ran short could catch the board mid-cascade. My old capture card also showed the game about 3 seconds late. To upgrade the program, I taught it to recognize when the board had stopped moving. After each swap, it waits for the board to change, then for it to settle, and makes the next move as soon as it does.',
       },
       {
         title: 'Power gems that doubt themselves',
-        text: 'Power gems pulse, which drags down how sure the vision is about their color. Once, the only legal move was a power gem the bot didn’t trust, and it froze. The center of a power gem stays a bright, saturated version of its color, so now a strong center restores full confidence.',
+        text: 'The bot was taught to ignore gems it wasn’t confident about, as a safety net against misreading the board. Power gems pulse, which drags down that confidence. That worked until the bot hit a board where the only legal move involved a low-confidence power gem, and it froze. That forced me to tackle the problem head-on with new parameters and checks. The main one: a power gem’s center stays a bright, saturated version of its color even while it pulses, so a strong center now restores full confidence.',
       },
       {
         title: 'Button timing',

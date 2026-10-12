@@ -156,6 +156,12 @@
   color: var(--color-text-muted);
 }
 
+.explainer {
+  max-width: 720px;
+  margin: 20px auto 0;
+  text-align: left;
+}
+
 .phases {
   display: grid;
   grid-template-columns: 1fr;

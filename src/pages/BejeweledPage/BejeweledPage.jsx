@@ -58,6 +58,11 @@ export default function BejeweledPage() {
           ))}
         </ol>
         <p className={styles.loopNote}>↻ {pipeline.loopNote}</p>
+        <div className={styles.explainer}>
+          {pipeline.explainer.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </div>
 
         <ol className={styles.phases}>
           {phases.map(({ name, text }, i) => (
