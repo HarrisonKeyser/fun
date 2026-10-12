@@ -22,6 +22,11 @@ export const HOME_SECTIONS = [
         image: '/images/thumbnails/senet.webp',
       },
       {
+        title: 'Bejeweled Bot',
+        path: ROUTE_PATHS.bejeweledBot,
+        image: '/images/thumbnails/bejeweled-bot.webp',
+      },
+      {
         title: 'Bank Bonuses',
         path: ROUTE_PATHS.bankBonuses,
         image: '/images/thumbnails/bank-bonuses.webp',

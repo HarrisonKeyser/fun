@@ -32,6 +32,7 @@ If an Actions run shows a red ✗, the live site is left as it was. Click into t
 | Home page sections and thumbnails           | `src/content/homeSections.js`         |
 | Video pages (Yahtzee, recruiter demos)      | `src/content/caseStudies.jsx`         |
 | Bank bonus offers and FAQ                   | `src/content/bankBonuses.js`          |
+| Bejeweled Bot page text (and video link)    | `src/content/bejeweledBot.js`         |
 | Page web addresses                          | `src/routePaths.js`                   |
 | Site-wide colors, fonts, spacing            | `src/styles/global.css`               |
 | Browser-tab title, link-preview text        | `index.html`                          |
@@ -56,11 +57,16 @@ src/
       grandmaster.js    The Grandmaster opponent (perfect play from the solved game)
       gameAnalysis.js   Game review: scores every turn against the solution
       GameReview.jsx    The review panel (summary, win-chance chart, move list)
+    BejeweledPage/
+      botSolver.js      The Bejeweled bot's move chooser (port of the Python bot)
+      match3.js         The demo board's game rules
+      BotDemo.jsx       The interactive "watch it think" board
   styles/global.css     Site-wide styles
 public/                 Files copied as-is (favicon, audio, CNAME for the custom domain)
 scripts/                Build helper that makes every page address work on GitHub Pages
 tools/senet-solver/     The program that solved Senet (run on a PC; not part of the site)
 tools/senet-data-worker/ The Cloudflare Worker that serves the solution to Grandmaster
+tools/bejeweled-solver-fixtures/ Makes test answers from the Python Bejeweled bot
 drafts/                 Unfinished work, not part of the site (e.g. the Baseball post)
 .github/workflows/      The automatic publishing setup
 ```
