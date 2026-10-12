@@ -8,6 +8,7 @@ export const ROUTE_PATHS = {
   click: '/progress-bar',
   senet: '/senet',
   bankBonuses: '/bank-bonuses',
+  bejeweledBot: '/bejeweled-bot',
   yahtzee: '/yahtzee',
   universityRetention: '/university-retention',
   flightSafety: '/flight-safety',

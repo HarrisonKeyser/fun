@@ -37,6 +37,11 @@ Harrison Keyser's personal site, **harrisonkeyser.fun**: games, statistics expla
 - The game is fully solved (8.56 billion positions; first mover wins 52.2515% with perfect play). The 17 GB solution lives in Cloudflare R2 (bucket `senet`) and is served by the Worker in `tools/senet-data-worker` at `https://senet-data.harrisonkeyser333.workers.dev` (`/health` checks the upload). The Grandmaster opponent and the game review read it through `grandmaster.js`.
 - The domain's DNS stays at Namecheap on purpose: it handles his email forwarding.
 
+## Bejeweled Bot
+
+- The bot's code lives in its own repo, `HarrisonKeyser/bejeweled-bot` (Python). This site has the write-up page and a JavaScript port of its move chooser (`src/pages/BejeweledPage/botSolver.js`).
+- `botSolver.test.js` checks the port against answers from the Python version; regenerate them with `tools/bejeweled-solver-fixtures/make_fixtures.py` if the Python solver changes.
+
 ## Old site
 
 The pre-2026 version is preserved on branches `archive/old-site-build` and `archive/old-site-source`; the "Restore old site" workflow republishes it. Images used to live in the S3 bucket `harrisonkeyserfun`, which only the old site still uses.

@@ -1,0 +1,276 @@
+.header h1 {
+  margin: 8px 0 4px;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+}
+
+.tagline {
+  margin: 0 0 20px;
+  font-size: 18px;
+  color: var(--color-text-muted);
+}
+
+.prose {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
+  font-size: 17px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-width: 720px;
+  margin: 24px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stats li {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 8px;
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-accent);
+}
+
+.statLabel {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.figure {
+  max-width: 960px;
+  margin: 32px auto 0;
+}
+
+.figure img {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.figure figcaption {
+  max-width: 720px;
+  margin: 10px auto 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.video {
+  max-width: 900px;
+  margin: 32px auto 0;
+}
+
+.section {
+  margin-top: 56px;
+}
+
+.section h2 {
+  margin: 0 0 8px;
+}
+
+.sectionIntro {
+  max-width: 720px;
+  margin: 0 auto 24px;
+  text-align: left;
+}
+
+/* How it works: the hardware chain, left to right on wide screens */
+
+.pipeline {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 28px;
+  max-width: 1100px;
+  margin: 20px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pipeline li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.pipeline li span {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.pipeline li + li::before {
+  content: '↓';
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  color: var(--color-text-subtle);
+}
+
+@media (min-width: 900px) {
+  .pipeline {
+    flex-direction: row;
+    gap: 30px;
+  }
+
+  .pipeline li {
+    flex: 1;
+  }
+
+  .pipeline li + li::before {
+    content: '→';
+    top: 50%;
+    left: -24px;
+    transform: translateY(-50%);
+  }
+}
+
+.loopNote {
+  max-width: 720px;
+  margin: 14px auto 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.phases {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  max-width: 1100px;
+  margin: 32px auto 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .phases {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1000px) {
+  .phases {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.phases li {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+}
+
+.phases h3 {
+  display: inline;
+  margin: 0;
+  font-size: 18px;
+}
+
+.phases p {
+  margin: 6px 0 0;
+  font-size: 15px;
+}
+
+.phaseNumber {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+/* Problems */
+
+.problems {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 20px auto 0;
+  text-align: left;
+}
+
+@media (min-width: 760px) {
+  .problems {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .problems {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.card {
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.card p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Code */
+
+.codeSection p {
+  max-width: 640px;
+  margin: 0 auto 16px;
+}
+
+.codeSection .githubButton {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.codeSection .githubButton:hover {
+  background-color: #0b4a85;
+  border-color: #0b4a85;
+}
+
+.codeSection .builtWith {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--color-text-subtle);
+}
