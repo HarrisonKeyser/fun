@@ -9,9 +9,9 @@
 */
 import { applyMove, getLegalMoves, HOUSE_COUNT, HOUSES, opponentOf } from './senetRules.js';
 
-// Where the solution is served from. Leave as null to hide the Grandmaster option.
+// Where the solution is served from (tools/senet-data-worker). Set to null to hide the Grandmaster option.
 // (VITE_GRANDMASTER_DATA_URL overrides it for local testing.)
-const SOLUTION_URL = null;
+const SOLUTION_URL = 'https://senet-data.harrisonkeyser333.workers.dev';
 
 export const GRANDMASTER_DATA_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GRANDMASTER_DATA_URL) || SOLUTION_URL;
