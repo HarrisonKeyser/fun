@@ -13,7 +13,7 @@ const SITE_NAME = 'Stats Playground · Harrison Keyser';
  * @param {string}  title      Shown in the browser tab. Omit on the home page.
  * @param {boolean} showBack   Show the arrow back to the home page.
  * @param {boolean} showSoundToggle  Show the sound on/off button (for pages that play sounds).
- * @param {'narrow'|'wide'} width  How wide the content column can get.
+ * @param {'narrow'|'wide'|'full'} width  How wide the content column can get.
  */
 export default function PageLayout({
   title,

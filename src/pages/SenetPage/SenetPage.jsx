@@ -222,7 +222,7 @@ export default function SenetPage() {
   }
 
   return (
-    <PageLayout title="Egyptian Senet" width="wide" showSoundToggle>
+    <PageLayout title="Egyptian Senet" width={reviewing ? 'full' : 'wide'} showSoundToggle>
       <h1 className={styles.title}>Egyptian Senet</h1>
 
       {winner && (
@@ -288,19 +288,21 @@ export default function SenetPage() {
         </p>
       )}
 
-      <SenetBoard
-        game={shownGame}
-        legalMoves={canAct && !reviewing ? legalMoves : []}
-        selectedMove={reviewing ? null : selectedMove}
-        onSquareClick={reviewing ? () => {} : handleSquareClick}
-        highlights={reviewHighlights}
-      />
-
       {reviewing ? (
-        <>
-          <ReviewStepper step={reviewStep} turnCount={history.length} onSelectStep={selectStep} />
-          <CastingSticks sticks={reviewTurn?.roll.sticks ?? null} />
-          <TurnDetails turn={reviewTurn} startChance={review.analysis.points[0]} nameOf={nameOf} />
+        // Wide screens: board and turn details on the left (pinned while scrolling), analysis on the right.
+        <div className={styles.reviewLayout}>
+          <div className={styles.reviewBoardColumn}>
+            <SenetBoard
+              game={shownGame}
+              legalMoves={[]}
+              selectedMove={null}
+              onSquareClick={() => {}}
+              highlights={reviewHighlights}
+            />
+            <ReviewStepper step={reviewStep} turnCount={history.length} onSelectStep={selectStep} />
+            <CastingSticks sticks={reviewTurn?.roll.sticks ?? null} compact />
+            <TurnDetails turn={reviewTurn} startChance={review.analysis.points[0]} nameOf={nameOf} />
+          </div>
           <GameReview
             analysis={review.analysis}
             step={reviewStep}
@@ -309,9 +311,16 @@ export default function SenetPage() {
             nameOf={nameOf}
             onClose={closeReview}
           />
-        </>
+        </div>
       ) : (
         <>
+          <SenetBoard
+            game={game}
+            legalMoves={canAct ? legalMoves : []}
+            selectedMove={selectedMove}
+            onSquareClick={handleSquareClick}
+          />
+
           <div className={styles.controls}>
             <button
               type="button"
@@ -345,7 +354,7 @@ export default function SenetPage() {
 
           {review?.status === 'loading' && (
             <p className={styles.reviewNote} aria-live="polite">
-              Checking every move against the solution… {Math.round((100 * review.done) / Math.max(1, review.total))}%
+              Analyzing… {Math.round((100 * review.done) / Math.max(1, review.total))}%
             </p>
           )}
           {review?.status === 'error' && (

@@ -89,3 +89,19 @@
 .setup label + select {
   margin-right: 6px;
 }
+
+/* Game review: side by side on wide screens */
+@media (min-width: 1200px) {
+  .reviewLayout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(380px, 36vw, 560px);
+    align-items: start;
+    gap: 32px;
+    margin-top: 8px;
+  }
+
+  .reviewBoardColumn {
+    position: sticky; /* the board stays in view while scrolling the analysis */
+    top: 16px;
+  }
+}
