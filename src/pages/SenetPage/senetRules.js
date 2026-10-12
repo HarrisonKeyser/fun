@@ -65,6 +65,9 @@ export function createStartingBoard() {
   return board;
 }
 
+/** Chance of each roll: four sticks give 1, 2, 3 or 4 light sides (or 0 lights, which counts as 5). */
+export const ROLL_PROBABILITIES = { 1: 4 / 16, 2: 6 / 16, 3: 4 / 16, 4: 1 / 16, 5: 1 / 16 };
+
 /**
  * Throw the four casting sticks. Each lands light side up or dark side up.
  * The roll is the number of light sides showing, except zero lights counts as 5.

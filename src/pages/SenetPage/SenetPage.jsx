@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import PageLayout from '../../components/PageLayout.jsx';
 import SenetBoard from './SenetBoard.jsx';
 import CastingSticks from './CastingSticks.jsx';
 import SenetRules from './SenetRules.jsx';
+import GameReview, { ReviewStepper, TurnDetails } from './GameReview.jsx';
 import {
   BLUE,
   GREEN,
   getLegalMoves,
   MOVE_TYPES,
   opponentOf,
+  PAWNS_PER_PLAYER,
   playerName,
   throwSticks,
 } from './senetRules.js';
+import { analyzeGame } from './gameAnalysis.js';
 import { chooseComputerMove, DIFFICULTIES } from './computerPlayer.js';
 import { createGrandmaster, GRANDMASTER_DATA_URL } from './grandmaster.js';
 import { ACTIONS, createGame, EVENTS, OPPONENTS, senetReducer } from './senetGame.js';
@@ -46,10 +49,24 @@ function randomColor() {
   return Math.random() < 0.5 ? BLUE : GREEN;
 }
 
+const COLOR_CHOICES = { RANDOM: 'random', GREEN, BLUE };
+
+const COMPUTER_NAMES = {
+  [OPPONENTS.COMPUTER_EASY]: 'Computer (Easy)',
+  [OPPONENTS.COMPUTER_MEDIUM]: 'Computer (Medium)',
+  [OPPONENTS.COMPUTER_GRANDMASTER]: 'Grandmaster',
+};
+
+const countOnBoard = (board, player) => board.filter((pawn) => pawn === player).length;
+
 export default function SenetPage() {
   const [game, dispatch] = useReducer(senetReducer, undefined, () => createGame());
   const [grandmasterOffline, setGrandmasterOffline] = useState(false);
-  const { board, currentPlayer, roll, selectedHouse, winner, opponent, computerColor } = game;
+  const [colorChoice, setColorChoice] = useState(COLOR_CHOICES.RANDOM);
+  // Game review: { status: 'loading' | 'ready' | 'error', done, total, analysis, step }
+  const [review, setReview] = useState(null);
+  const reviewRun = useRef(0); // ignores results from a review that was closed or replaced
+  const { board, currentPlayer, roll, selectedHouse, winner, opponent, computerColor, history } = game;
 
   const legalMoves = useMemo(
     () => (roll ? getLegalMoves(board, currentPlayer, roll.value) : []),
@@ -127,11 +144,67 @@ export default function SenetPage() {
     return () => clearTimeout(timer);
   }, [isComputerTurn, hasNoMoves, roll, selectedMove, legalMoves, opponent, board, computerColor]);
 
-  function startNewGame(nextOpponent = opponent) {
-    const nextComputerColor = nextOpponent === OPPONENTS.HUMAN ? null : randomColor();
+  function startNewGame(nextOpponent = opponent, nextColorChoice = colorChoice) {
+    let nextComputerColor = null;
+    if (nextOpponent !== OPPONENTS.HUMAN) {
+      nextComputerColor =
+        nextColorChoice === COLOR_CHOICES.RANDOM ? randomColor() : opponentOf(nextColorChoice);
+    }
     dispatch({ type: ACTIONS.NEW_GAME, opponent: nextOpponent, computerColor: nextComputerColor });
     setGrandmasterOffline(false);
+    closeReview();
   }
+
+  // ----- Game review
+
+  function closeReview() {
+    reviewRun.current += 1;
+    setReview(null);
+  }
+
+  async function openReview() {
+    const run = ++reviewRun.current;
+    const update = (changes) => {
+      if (run === reviewRun.current) setReview((current) => current && { ...current, ...changes });
+    };
+    setReview({ status: 'loading', done: 0, total: history.length, step: history.length });
+    try {
+      const analysis = await analyzeGame(history, grandmaster, (done, total) => update({ done, total }));
+      update({ status: 'ready', analysis });
+    } catch (error) {
+      console.warn('Game review could not reach the solution:', error);
+      update({ status: 'error' });
+    }
+  }
+
+  const selectStep = useCallback(
+    (step) => setReview((current) => current && { ...current, step: Math.max(0, Math.min(history.length, step)) }),
+    [history.length],
+  );
+
+  const reviewing = review?.status === 'ready';
+  const reviewStep = reviewing ? review.step : null;
+  const reviewTurn = reviewing && reviewStep > 0 ? review.analysis.turns[reviewStep - 1] : null;
+  const reviewBoard = reviewing ? (reviewStep < history.length ? history[reviewStep].board : board) : null;
+  const shownGame = reviewing
+    ? {
+        board: reviewBoard,
+        selectedHouse: null,
+        borneOff: {
+          blue: PAWNS_PER_PLAYER - countOnBoard(reviewBoard, BLUE),
+          green: PAWNS_PER_PLAYER - countOnBoard(reviewBoard, GREEN),
+        },
+      }
+    : game;
+  const reviewHighlights = reviewTurn?.move
+    ? { from: reviewTurn.move.from, to: reviewTurn.move.landsOn ?? null }
+    : null;
+
+  function nameOf(player) {
+    if (!vsComputer) return playerName(player);
+    return player === computerColor ? COMPUTER_NAMES[opponent] : 'You';
+  }
+  const reviewPerspective = vsComputer ? opponentOf(computerColor) : GREEN;
 
   function handleSquareClick(house) {
     if (!canAct || !roll) return;
@@ -177,6 +250,23 @@ export default function SenetPage() {
             <option value={OPPONENTS.COMPUTER_GRANDMASTER}>Computer (Grandmaster)</option>
           )}
         </select>
+        {vsComputer && (
+          <>
+            <label htmlFor="color">Your color:</label>
+            <select
+              id="color"
+              value={colorChoice}
+              onChange={(event) => {
+                setColorChoice(event.target.value);
+                startNewGame(opponent, event.target.value);
+              }}
+            >
+              <option value={COLOR_CHOICES.RANDOM}>Random</option>
+              <option value={COLOR_CHOICES.GREEN}>Green (moves first)</option>
+              <option value={COLOR_CHOICES.BLUE}>Blue</option>
+            </select>
+          </>
+        )}
         <button type="button" className="button" onClick={() => startNewGame()}>
           New Game
         </button>
@@ -199,52 +289,95 @@ export default function SenetPage() {
       )}
 
       <SenetBoard
-        game={game}
-        legalMoves={canAct ? legalMoves : []}
-        selectedMove={selectedMove}
-        onSquareClick={handleSquareClick}
+        game={shownGame}
+        legalMoves={canAct && !reviewing ? legalMoves : []}
+        selectedMove={reviewing ? null : selectedMove}
+        onSquareClick={reviewing ? () => {} : handleSquareClick}
+        highlights={reviewHighlights}
       />
 
-      <div className={styles.controls}>
-        <button
-          type="button"
-          className="button"
-          onClick={() => dispatch({ type: ACTIONS.ROLL, roll: throwSticks() })}
-          disabled={!canAct || roll !== null}
-        >
-          Roll
-        </button>
-        <button
-          type="button"
-          className="button"
-          onClick={() => dispatch({ type: ACTIONS.MOVE, move: selectedMove })}
-          disabled={!canAct || !selectedMove}
-        >
-          {selectedMove?.type === MOVE_TYPES.BEAR_OFF ? 'Bear Off Selected Pawn' : 'Move Selected Pawn'}
-        </button>
-      </div>
+      {reviewing ? (
+        <>
+          <ReviewStepper step={reviewStep} turnCount={history.length} onSelectStep={selectStep} />
+          <CastingSticks sticks={reviewTurn?.roll.sticks ?? null} />
+          <TurnDetails turn={reviewTurn} startChance={review.analysis.points[0]} nameOf={nameOf} />
+          <GameReview
+            analysis={review.analysis}
+            step={reviewStep}
+            onSelectStep={selectStep}
+            perspective={reviewPerspective}
+            nameOf={nameOf}
+            onClose={closeReview}
+          />
+        </>
+      ) : (
+        <>
+          <div className={styles.controls}>
+            <button
+              type="button"
+              className="button"
+              onClick={() => dispatch({ type: ACTIONS.ROLL, roll: throwSticks() })}
+              disabled={!canAct || roll !== null}
+            >
+              Roll
+            </button>
+            <button
+              type="button"
+              className="button"
+              onClick={() => dispatch({ type: ACTIONS.MOVE, move: selectedMove })}
+              disabled={!canAct || !selectedMove}
+            >
+              {selectedMove?.type === MOVE_TYPES.BEAR_OFF ? 'Bear Off Selected Pawn' : 'Move Selected Pawn'}
+            </button>
+            {winner && grandmaster && (
+              <button
+                type="button"
+                className={`button ${styles.reviewButton}`}
+                onClick={openReview}
+                disabled={review?.status === 'loading'}
+              >
+                {review?.status === 'loading' ? 'Analyzing…' : 'Review Game'}
+              </button>
+            )}
+          </div>
 
-      <CastingSticks sticks={roll?.sticks ?? null} />
+          <CastingSticks sticks={roll?.sticks ?? null} />
 
-      <p className={styles.status} aria-live="polite">
-        {roll ? (
-          <>
-            <strong>
-              {describeRoller()} rolled a {roll.value}
-            </strong>
-            {hasNoMoves && ' — no legal moves, turn passes.'}
-          </>
-        ) : (
-          !winner && <>&nbsp;</>
-        )}
-      </p>
+          {review?.status === 'loading' && (
+            <p className={styles.reviewNote} aria-live="polite">
+              Checking every move against the solution… {Math.round((100 * review.done) / Math.max(1, review.total))}%
+            </p>
+          )}
+          {review?.status === 'error' && (
+            <p className={styles.reviewNote} role="alert">
+              The review couldn't reach the solution.{' '}
+              <button type="button" className="button" onClick={openReview}>
+                Try Again
+              </button>
+            </p>
+          )}
 
-      {!winner && (
-        <p className={styles.turn}>
-          Current Turn:{' '}
-          <span className={styles[`${currentPlayer}Text`]}>{playerName(currentPlayer)}</span>
-          {isComputerTurn && ' (computer)'}
-        </p>
+          <p className={styles.status} aria-live="polite">
+            {roll ? (
+              <>
+                <strong>
+                  {describeRoller()} rolled a {roll.value}
+                </strong>
+                {hasNoMoves && ' — no legal moves, turn passes.'}
+              </>
+            ) : (
+              !winner && <>&nbsp;</>
+            )}
+          </p>
+
+          {!winner && (
+            <p className={styles.turn}>
+              Current Turn:{' '}
+              <span className={styles[`${currentPlayer}Text`]}>{playerName(currentPlayer)}</span>
+              {isComputerTurn && ' (computer)'}
+            </p>
+          )}
+        </>
       )}
 
       <SenetRules />

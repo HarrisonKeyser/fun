@@ -51,6 +51,16 @@
   box-shadow: 0 0 10px gold;
 }
 
+/* Game review: the move being looked at */
+.movedFrom {
+  box-shadow: inset 0 0 0 3px rgba(0, 51, 102, 0.35);
+}
+
+.movedTo {
+  z-index: 1;
+  outline: 3px solid var(--color-accent);
+}
+
 .symbol {
   font-family: 'Noto Sans Egyptian Hieroglyphs', sans-serif;
   font-size: 63cqi;

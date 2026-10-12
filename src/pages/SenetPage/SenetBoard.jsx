@@ -30,7 +30,10 @@ function BorneOffTray({ player, count }) {
   );
 }
 
-export default function SenetBoard({ game, legalMoves, selectedMove, onSquareClick }) {
+/**
+ * @param {object} highlights  Optional { from, to } houses of a move to mark (used by the game review).
+ */
+export default function SenetBoard({ game, legalMoves, selectedMove, onSquareClick, highlights = null }) {
   const { board, borneOff, selectedHouse } = game;
   const movableHouses = new Set(legalMoves.map((move) => move.from));
 
@@ -51,6 +54,8 @@ export default function SenetBoard({ game, legalMoves, selectedMove, onSquareCli
             house % 2 === 0 ? styles.light : styles.dark,
             isDestination && styles.destination,
             isClickable && styles.clickable,
+            highlights?.from === house && styles.movedFrom,
+            highlights?.to === house && styles.movedTo,
           ]
             .filter(Boolean)
             .join(' ');

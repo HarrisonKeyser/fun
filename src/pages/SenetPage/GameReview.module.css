@@ -1,0 +1,289 @@
+.review {
+  max-width: var(--content-width);
+  margin: 24px auto 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  text-align: left;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+/* Two players side by side; stacked on phones */
+.summaries {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.summary {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: #fff;
+}
+
+.summary h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.color {
+  font-weight: normal;
+  color: var(--color-text-muted);
+}
+
+.summary dl {
+  margin: 0;
+}
+
+.summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  font-size: 14px;
+}
+
+.summary dt {
+  color: var(--color-text-muted);
+}
+
+.summary dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.chartTitle,
+.listTitle {
+  margin: 16px 0 4px;
+  font-size: 1rem;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 14px 0 6px;
+}
+
+.stepper .button {
+  min-width: 44px;
+  padding: 8px 10px;
+}
+
+.stepLabel {
+  min-width: 110px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.details {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 10px 12px;
+  text-align: left;
+  border-left: 4px solid var(--color-accent);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  background: #fff;
+  font-size: 15px;
+}
+
+.details p {
+  margin: 0 0 6px;
+}
+
+.verdict {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.options {
+  width: 100%;
+  margin-top: 6px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.options caption {
+  padding-bottom: 4px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.options th,
+.options td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.options th {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.options td:last-child,
+.options th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.played {
+  background: rgba(255, 215, 0, 0.18);
+}
+
+.tag {
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: #e6eaf2;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Move list */
+.moveList {
+  max-height: 280px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: #fff;
+  list-style: none;
+}
+
+.moveRow {
+  display: grid;
+  grid-template-columns: 2.6em minmax(0, 1.4fr) 4.6em minmax(0, 1fr) 2.6em 3em;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-bottom: 1px solid #eef1f6;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.moveRow:hover {
+  background: #f4f6fb;
+}
+
+.moveRow[aria-current='true'] {
+  background: rgba(0, 51, 102, 0.1);
+}
+
+.turnNumber,
+.roll,
+.chance {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chance {
+  text-align: right;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.notation {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.marks {
+  display: flex;
+  gap: 3px;
+}
+
+.pawnDot {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.green {
+  background: #0a470e;
+}
+
+.blue {
+  background: hsl(195, 78%, 73%);
+  box-shadow: inset 0 0 0 1px #888;
+}
+
+.badge {
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0 3px;
+  border-radius: 3px;
+  color: #000;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.inaccuracy {
+  background: var(--color-inaccuracy);
+}
+
+.mistake {
+  background: var(--color-mistake);
+}
+
+.blunder {
+  background: var(--color-blunder);
+  color: #fff;
+}
+
+.luck {
+  color: #8a93a3;
+  font-size: 12px;
+}
+
+@media (max-width: 520px) {
+  .review {
+    padding: 12px;
+  }
+
+  .moveRow {
+    grid-template-columns: 2.1em minmax(0, 1.7fr) 1.1em minmax(0, 1fr) 2.4em 2.7em;
+    font-size: 13px;
+  }
+
+  /* "rolled 3" becomes just "3" on phones */
+  .rollWord {
+    display: none;
+  }
+}

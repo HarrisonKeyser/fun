@@ -74,3 +74,18 @@
 .greenText {
   color: #0a470e;
 }
+
+.reviewButton {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.reviewNote {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+}
+
+.setup label + select {
+  margin-right: 6px;
+}

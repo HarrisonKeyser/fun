@@ -54,6 +54,8 @@ src/
       senetRules.test.js
       computerPlayer.js The Easy and Medium computer opponents
       grandmaster.js    The Grandmaster opponent (perfect play from the solved game)
+      gameAnalysis.js   Game review: scores every turn against the solution
+      GameReview.jsx    The review panel (summary, win-chance chart, move list)
   styles/global.css     Site-wide styles
 public/                 Files copied as-is (favicon, audio, CNAME for the custom domain)
 scripts/                Build helper that makes every page address work on GitHub Pages
