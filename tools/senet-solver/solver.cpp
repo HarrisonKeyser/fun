@@ -651,9 +651,15 @@ struct Solver {
       int sweeps = 0, sinceImprovement = 0;
       double gap, narrowest = 1e300;
       do {
+        const auto sweepStart = Clock::now();
         gap = 0;
         for (auto [x, y] : members) gap = std::max(gap, sweepBounds(layerFor(x, y)));
         sweeps++;
+        if (layerFor(a, b).size > 50'000'000) {
+          printf("    layers %d-%d sweep %d: widest gap %.2f units (stops at %.2f, or when it stops shrinking), %.0f s\n", a, b,
+                 sweeps, gap, toleranceUnits, secondsSince(sweepStart));
+          fflush(stdout);
+        }
         if (gap < narrowest * 0.999) narrowest = gap, sinceImprovement = 0;
         else sinceImprovement++;
       } while (gap > toleranceUnits && sinceImprovement < 30);
@@ -750,8 +756,9 @@ void usage() {
       "      --precise; save a checkpoint every 20 minutes.\n"
       "  solver verify <pawns> --data <folder>\n"
       "      Recompute every saved position from the positions it leads to; report the largest error.\n"
-      "  solver simulate <pawns> --data <folder> [--games <n>]\n"
+      "  solver simulate <pawns> --data <folder> [--games <n>] [--seed <n>]\n"
       "      Perfect vs. perfect, vs. the website's Medium AI, and vs. random (default 100000 games each).\n"
+      "      The same seed always replays the same dice; use a different --seed for an independent sample.\n"
       "  solver certify <pawns> [tolerance units, default 1] [--data <folder>]\n"
       "      Prove the solution is unique with 32-bit lower/upper bounds (in memory; small games only).\n"
       "      With --data, also checks how far a saved solution is from the proven bounds.\n"
@@ -767,6 +774,7 @@ struct Options {
   double tolerance = -1;  // units; -1 = the storage format's default
   double checkpointMinutes = 20;
   int games = 100000;
+  u64 seed = 12345;
   std::vector<std::string> positional;
   int threads = 1;
 };
@@ -810,7 +818,7 @@ int run(const std::string& command, const Options& opt) {
 
   if (command == "simulate") {
     solver.useAllSavedLayers();
-    std::mt19937_64 rng(12345);
+    std::mt19937_64 rng(opt.seed);
     const double predicted = solver.valueOf(first, second);
     const double firstMover = simulate(solver, PERFECT, opt.games, rng).second;
     printf("Perfect vs. perfect (%d games): first mover won %.2f%%  (predicted %.2f%%)\n", opt.games,
@@ -922,6 +930,7 @@ int main(int argc, char** argv) {
     else if (arg == "--tolerance" && i + 1 < argc) opt.tolerance = atof(argv[++i]);
     else if (arg == "--checkpoint-minutes" && i + 1 < argc) opt.checkpointMinutes = atof(argv[++i]);
     else if (arg == "--games" && i + 1 < argc) opt.games = atoi(argv[++i]);
+    else if (arg == "--seed" && i + 1 < argc) opt.seed = strtoull(argv[++i], nullptr, 10);
     else if (arg == "--precise") precise = true;
     else opt.positional.push_back(arg);
   }
