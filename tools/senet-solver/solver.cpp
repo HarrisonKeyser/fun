@@ -1,22 +1,34 @@
 // Exact solver for Senet (the rules used on harrisonkeyser.fun/senet).
 //
-// For every position, computes the probability that the player about to roll wins,
-// assuming both players play perfectly from then on. "Perfect play" = Grandmaster.
+// For every position, computes the probability that the player about to roll wins, assuming both
+// players play perfectly from then on. Perfect play is what the website's Grandmaster will use.
 //
-// How it works
-//   - A position is stored from the point of view of the player about to roll:
-//     `me` and `op` are 30-bit masks (bit h-1 set = a pawn on house h).
-//     The game is symmetric between colors, so this halves the work.
-//   - Positions are grouped into layers by how many pawns each side still has on the board.
-//     Borne-off pawns never return, so moves only go to the same layer pair or a later one.
-//   - Within a layer pair, captures and the House of Water create loops, so values are found by
-//     value iteration: start with a guess and repeatedly apply
+// HOW IT WORKS
+//   - A position is stored from the point of view of the player about to roll: `me` and `op` are
+//     30-bit masks (bit h-1 set = a pawn on house h). The rules treat both colors the same, so this
+//     view halves the work.
+//   - A pawn can never stay on house 27 (the House of Water sends it straight back), so tables only
+//     cover the other 29 houses ("slots").
+//   - Positions are grouped into layers by how many pawns each side still has on the board. A borne-off
+//     pawn never returns, so play only moves to the same pair of layers or to a later one. Layers are
+//     solved from the end of the game backwards and saved to disk as they finish.
+//   - Within a pair of layers, captures and the House of Water create loops, so values are found by
+//     value iteration: start from a guess and repeatedly apply
 //         V(s) = sum over rolls r of P(r) * max over legal moves m of [1 - V(position after m)]
 //     until nothing changes. A position with no legal moves passes the turn.
+//   - Values are stored as 16-bit integers (probability x 65535) to fit the full game in 16 GB of RAM.
 //
-// Build:  g++ -O3 -march=native -fopenmp -o solver solver.cpp
-// Usage:  ./solver solve <pawnsPerSide> [tolerance] [--simulate <games>] [--save <file>]
-//         ./solver check < positions.txt     (prints legal moves; used to cross-check the website's rules)
+// BUILD
+//   g++ -O3 -march=native -fopenmp -o solver solver.cpp          (Linux / macOS with Homebrew gcc)
+//   g++ -O3 -march=native -fopenmp -o solver.exe solver.cpp      (Windows, MSYS2 UCRT64)
+//
+// COMMANDS (run the solver with no arguments for the full list)
+//   solve <pawns> --data <folder>     Solve and save every layer. Safe to stop and restart: it resumes.
+//   verify <pawns> --data <folder>    Recompute every saved position from its successors; report the error.
+//   simulate <pawns> --data <folder>  Play games: perfect vs. perfect, vs. the website's Medium AI, vs. random.
+//   certify <pawns>                   Prove the answer is unique with lower/upper bounds (small games only).
+//   benchmark <pawns> <a> <b>         Time sweeps of one layer.
+//   check                             Print legal moves for positions on stdin (used by cross-check.mjs).
 
 #include <algorithm>
 #include <chrono>
@@ -25,7 +37,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <map>
+#include <filesystem>
 #include <random>
 #include <string>
 #include <vector>
@@ -35,22 +47,70 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
+namespace fs = std::filesystem;
+using u16 = uint16_t;
 using u32 = uint32_t;
 using u64 = uint64_t;
+using Clock = std::chrono::steady_clock;
+
+static double secondsSince(Clock::time_point start) {
+  return std::chrono::duration<double>(Clock::now() - start).count();
+}
 
 constexpr int HOUSES = 30;
 constexpr u32 BOARD_MASK = (1u << HOUSES) - 1;
 constexpr u32 FIRST_ROW_MASK = (1u << 10) - 1;
-
-// A pawn can never stay on house 27 (the House of Water sends it straight back), so positions
-// are stored over the other 29 houses ("slots"). This cuts every table by about a third.
 constexpr int SLOTS = 29;
 constexpr u32 SLOT_MASK = BOARD_MASK & ~(1u << 26);  // every house except 27
 constexpr u32 ALL_SLOTS = (1u << SLOTS) - 1;
 
-// Probability of each roll 1..5 with four two-sided sticks (0 light sides counts as 5).
+// Probability of each roll 1..5 with four two-sided sticks (no light sides counts as 5).
 constexpr double ROLL_PROBABILITY[6] = {0, 4 / 16.0, 6 / 16.0, 4 / 16.0, 1 / 16.0, 1 / 16.0};
+
+// How values are stored. Changes are always measured in "units" of 1/65535 so tolerances mean the same
+// thing in both formats.
+constexpr double SCALE = 65535.0;
+
+template <typename T>
+struct Storage;
+
+// Compact: probability x 65535 in 2 bytes. Fits the full game in 16 GB of RAM.
+template <>
+struct Storage<u16> {
+  static constexpr const char* NAME = "16-bit";
+  static constexpr const char* EXTENSION = ".u16";
+  static constexpr double DEFAULT_TOLERANCE = 1;  // units
+  static double get(u16 v) { return v / SCALE; }
+  static u16 nearest(double p) { return (u16)std::lround(std::clamp(p, 0.0, 1.0) * SCALE); }
+  static u16 below(double p) { return (u16)std::floor(std::clamp(p, 0.0, 1.0) * SCALE + 1e-9); }
+  static u16 above(double p) { return (u16)std::ceil(std::clamp(p, 0.0, 1.0) * SCALE - 1e-9); }
+  static double unitsBetween(u16 x, u16 y) { return std::abs((int)x - (int)y); }
+};
+
+// Precise: 32-bit floating point (about 7 significant digits). Needs about 32 GB of RAM for the full game.
+template <>
+struct Storage<float> {
+  static constexpr const char* NAME = "32-bit precise";
+  static constexpr const char* EXTENSION = ".f32";
+  static constexpr double DEFAULT_TOLERANCE = 0.01;  // units, i.e. about 1.5e-7
+  static double get(float v) { return v; }
+  static float nearest(double p) { return (float)std::clamp(p, 0.0, 1.0); }
+  static float below(double p) { return std::max(0.0f, std::nextafter((float)p, 0.0f)); }
+  static float above(double p) { return std::min(1.0f, std::nextafter((float)p, 1.0f)); }
+  static double unitsBetween(float x, float y) { return std::fabs((double)x - y) * SCALE; }
+};
+
+// =============================================================== rules (mirror of senetRules.js)
 
 enum MoveType { MOVE = 0, CAPTURE = 1, WATER = 2, BEAR_OFF = 3 };
 
@@ -62,8 +122,6 @@ struct Move {
 
 inline u32 bit(int house) { return 1u << (house - 1); }
 inline bool has(u32 mask, int house) { return house >= 1 && house <= HOUSES && (mask & bit(house)); }
-
-// ---------------------------------------------------------------- rules (mirror of senetRules.js)
 
 int legalMoves(u32 me, u32 op, int roll, Move* out) {
   const u32 all = me | op;
@@ -125,7 +183,7 @@ void applyMove(u32& me, u32& op, const Move& move) {
   }
 }
 
-// ---------------------------------------------------------------- position <-> index
+// =============================================================== position <-> index
 
 u64 BINOMIAL[HOUSES + 2][HOUSES + 2];
 
@@ -166,36 +224,178 @@ inline u64 combinationRank(u32 set) {
   return rank;
 }
 
-// Next larger integer with the same number of set bits (Gosper's hack) — walks sets in rank order.
+// Next larger integer with the same number of set bits (Gosper's hack): walks sets in rank order.
 inline u32 nextCombination(u32 set) {
   const u32 lowest = set & -set;
   const u32 ripple = set + lowest;
   return ripple | (((set ^ ripple) >> 2) / lowest);
 }
 
+// =============================================================== files
+
+// Lets the operating system load a saved layer from disk on demand (and evict it under memory pressure).
+struct MappedFile {
+  const void* data = nullptr;
+  u64 bytes = 0;
+#ifdef _WIN32
+  HANDLE file = INVALID_HANDLE_VALUE, mapping = nullptr;
+#else
+  int fd = -1;
+#endif
+
+  bool open(const fs::path& path) {
+    close();
+#ifdef _WIN32
+    file = CreateFileW(path.wstring().c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, nullptr);
+    if (file == INVALID_HANDLE_VALUE) return false;
+    LARGE_INTEGER size;
+    GetFileSizeEx(file, &size);
+    bytes = (u64)size.QuadPart;
+    mapping = CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+    if (!mapping) return false;
+    data = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+#else
+    fd = ::open(path.c_str(), O_RDONLY);
+    if (fd < 0) return false;
+    struct stat info;
+    fstat(fd, &info);
+    bytes = (u64)info.st_size;
+    void* view = mmap(nullptr, bytes, PROT_READ, MAP_SHARED, fd, 0);
+    if (view == MAP_FAILED) return false;
+    madvise(view, bytes, MADV_RANDOM);
+    data = view;
+#endif
+    return data != nullptr;
+  }
+
+  void close() {
+#ifdef _WIN32
+    if (data) UnmapViewOfFile(data);
+    if (mapping) CloseHandle(mapping);
+    if (file != INVALID_HANDLE_VALUE) CloseHandle(file);
+    mapping = nullptr;
+    file = INVALID_HANDLE_VALUE;
+#else
+    if (data) munmap((void*)data, bytes);
+    if (fd >= 0) ::close(fd);
+    fd = -1;
+#endif
+    data = nullptr;
+    bytes = 0;
+  }
+
+  ~MappedFile() { close(); }
+};
+
+// Writes a large array safely: write to a temporary file, then rename it over the target.
+template <typename T>
+bool writeArray(const fs::path& path, const T* data, u64 count) {
+  const fs::path temporary = path.string() + ".tmp";
+  FILE* file = fopen(temporary.string().c_str(), "wb");
+  if (!file) return false;
+  constexpr u64 CHUNK = 1ull << 26;  // 64M values (128 MB) per write
+  for (u64 offset = 0; offset < count; offset += CHUNK) {
+    const u64 n = std::min(CHUNK, count - offset);
+    if (fwrite(data + offset, sizeof(T), n, file) != n) {
+      fclose(file);
+      return false;
+    }
+  }
+  if (fclose(file) != 0) return false;
+  std::error_code ignored;
+  fs::remove(path, ignored);
+  fs::rename(temporary, path);
+  return true;
+}
+
+template <typename T>
+bool readArray(const fs::path& path, T* data, u64 count) {
+  std::error_code error;
+  if (fs::file_size(path, error) != count * sizeof(T) || error) return false;
+  FILE* file = fopen(path.string().c_str(), "rb");
+  if (!file) return false;
+  constexpr u64 CHUNK = 1ull << 26;
+  for (u64 offset = 0; offset < count; offset += CHUNK) {
+    const u64 n = std::min(CHUNK, count - offset);
+    if (fread(data + offset, sizeof(T), n, file) != n) {
+      fclose(file);
+      return false;
+    }
+  }
+  fclose(file);
+  return true;
+}
+
+// =============================================================== the solver
+
+template <typename T>
 struct Layer {
   int mine = 0, theirs = 0;
   u64 opponentPlacements = 0;  // C(29 - mine, theirs)
-  std::vector<float> value;    // P(player about to roll wins). In certify mode: a guaranteed lower bound.
-  std::vector<float> upper;    // certify mode only: a guaranteed upper bound
-  u64 size() const { return BINOMIAL[SLOTS][mine] * opponentPlacements; }
+  u64 size = 0;                // number of positions
+  const T* values = nullptr;   // what lookups read: `owned` or a mapped file
+  std::vector<T> owned;        // in memory and writable (the layer being solved)
+  MappedFile mapped;           // saved on disk, read-only
+  std::vector<T> upper;        // certify mode only: upper bounds (`owned` holds the lower bounds)
+
+  u64 bytes() const { return size * sizeof(T); }
+  void release() {
+    owned.clear();
+    owned.shrink_to_fit();
+    upper.clear();
+    upper.shrink_to_fit();
+    mapped.close();
+    values = nullptr;
+  }
 };
 
-struct Solver {
-  int pawns;
-  std::vector<Layer> layers;  // indexed [mine * (pawns+1) + theirs]
+using LayerId = std::pair<int, int>;
 
-  explicit Solver(int pawnsPerSide) : pawns(pawnsPerSide), layers((pawnsPerSide + 1) * (pawnsPerSide + 1)) {
+template <typename T>
+struct Solver {
+  using S = Storage<T>;
+  using Layer = ::Layer<T>;
+  int pawns;
+  fs::path dataFolder;
+  std::vector<Layer> layers;  // indexed [mine * (pawns + 1) + theirs]
+
+  explicit Solver(int pawnsPerSide, fs::path folder = {})
+      : pawns(pawnsPerSide), dataFolder(std::move(folder)), layers((pawnsPerSide + 1) * (pawnsPerSide + 1)) {
     for (int a = 0; a <= pawns; a++)
       for (int b = 0; b <= pawns; b++) {
         Layer& layer = layerFor(a, b);
         layer.mine = a;
         layer.theirs = b;
         layer.opponentPlacements = BINOMIAL[SLOTS - a][b];
+        layer.size = BINOMIAL[SLOTS][a] * layer.opponentPlacements;
       }
   }
 
   Layer& layerFor(int mine, int theirs) { return layers[mine * (pawns + 1) + theirs]; }
+
+  fs::path layerPath(int a, int b) const {
+    return dataFolder /
+           ("senet" + std::to_string(pawns) + "-layer-" + std::to_string(a) + "-" + std::to_string(b) + S::EXTENSION);
+  }
+  fs::path checkpointPath(int a, int b) const { return layerPath(a, b).string() + ".checkpoint"; }
+
+  bool isSaved(int a, int b) {
+    std::error_code error;
+    const u64 bytes = fs::file_size(layerPath(a, b), error);
+    return !error && bytes == layerFor(a, b).bytes();
+  }
+
+  // Makes a finished layer readable, mapping it from disk if it isn't already in memory.
+  void useSavedLayer(int a, int b) {
+    Layer& layer = layerFor(a, b);
+    if (layer.values) return;
+    if (!isSaved(a, b) || !layer.mapped.open(layerPath(a, b))) {
+      fprintf(stderr, "Missing or unreadable %s\n", layerPath(a, b).string().c_str());
+      exit(1);
+    }
+    layer.values = (const T*)layer.mapped.data;
+  }
 
   u64 index(const Layer& layer, u32 me, u32 op) const {
     const u32 mySlots = extractBits(me, SLOT_MASK);
@@ -205,155 +405,263 @@ struct Solver {
   }
 
   template <bool readUpper = false>
-  float valueOf(u32 me, u32 op) {
+  const T* slotFor(u32 me, u32 op) {
     Layer& layer = layerFor(__builtin_popcount(me), __builtin_popcount(op));
-    return (readUpper ? layer.upper : layer.value)[index(layer, me, op)];
+    return (readUpper ? layer.upper.data() : layer.values) + index(layer, me, op);
   }
 
-  // Win probability for the player about to roll, given current estimates of the other positions.
-  // If `bestMoves` is given, also records the best move index for each roll (-1 = pass).
-  // readUpper: read the opponent's upper bounds (used to compute a guaranteed lower bound).
+  double valueOf(u32 me, u32 op) { return S::get(*slotFor(me, op)); }
+
+  // Win probability for the player about to roll, from the current values of the positions it leads to.
+  // All successor values are located and prefetched first, so their memory loads overlap instead of
+  // happening one at a time. If `bestMoves` is given, also records the best move for each roll (-1 = pass).
+  // readUpper: read the opponent's upper bounds (certify mode, to compute a guaranteed lower bound).
   template <bool readUpper = false>
   double evaluate(u32 me, u32 op, int* bestMoves = nullptr) {
-    Move moves[8];
+    Move moves[5][8];
+    int counts[5];
+    const T* successor[5][8];  // nullptr = this move wins the game outright
+    for (int r = 0; r < 5; r++) {
+      counts[r] = legalMoves(me, op, r + 1, moves[r]);
+      if (counts[r] == 0) {
+        successor[r][0] = slotFor<readUpper>(op, me);  // pass
+        __builtin_prefetch(successor[r][0]);
+        continue;
+      }
+      for (int i = 0; i < counts[r]; i++) {
+        u32 nextMe = me, nextOp = op;
+        applyMove(nextMe, nextOp, moves[r][i]);
+        successor[r][i] = nextMe == 0 ? nullptr : slotFor<readUpper>(nextOp, nextMe);
+        if (successor[r][i]) __builtin_prefetch(successor[r][i]);
+      }
+    }
+
     double total = 0;
-    for (int roll = 1; roll <= 5; roll++) {
-      const int count = legalMoves(me, op, roll, moves);
-      double best;
+    for (int r = 0; r < 5; r++) {
+      double best = -1;
       int bestIndex = -1;
-      if (count == 0) {
-        best = 1.0 - valueOf<readUpper>(op, me);  // pass
+      if (counts[r] == 0) {
+        best = 1.0 - S::get(*successor[r][0]);
       } else {
-        best = -1;
-        for (int i = 0; i < count; i++) {
-          u32 nextMe = me, nextOp = op;
-          applyMove(nextMe, nextOp, moves[i]);
-          const double result = nextMe == 0 ? 1.0 : 1.0 - valueOf<readUpper>(nextOp, nextMe);
+        for (int i = 0; i < counts[r]; i++) {
+          const double result = successor[r][i] ? 1.0 - S::get(*successor[r][i]) : 1.0;
           if (result > best) {
             best = result;
             bestIndex = i;
           }
         }
       }
-      if (bestMoves) bestMoves[roll] = bestIndex;
-      total += ROLL_PROBABILITY[roll] * best;
+      if (bestMoves) bestMoves[r + 1] = bestIndex;
+      total += ROLL_PROBABILITY[r + 1] * best;
     }
     return total;
   }
 
-  // One in-place pass over a layer, visiting positions in storage order. Returns the largest change
-  // (or, when certifying, the largest gap between the lower and upper bound).
-  template <bool certify = false>
-  double sweep(Layer& layer) {
+  // Visits every position of a layer in storage order, in parallel: fn(me, op, index).
+  // Returns the maximum of what fn returns.
+  template <typename Fn>
+  double forEachPosition(const Layer& layer, Fn fn) {
     const int a = layer.mine, b = layer.theirs;
     std::vector<u32> mySlotSets;
     for (u32 set = (1u << a) - 1; set <= ALL_SLOTS; set = nextCombination(set)) mySlotSets.push_back(set);
-
     double largest = 0;
-#pragma omp parallel for schedule(dynamic, 64) reduction(max : largest)
+#pragma omp parallel for schedule(dynamic, 16) reduction(max : largest)
     for (size_t i = 0; i < mySlotSets.size(); i++) {
       const u32 me = depositBits(mySlotSets[i], SLOT_MASK);
       const u32 freeSlots = ~mySlotSets[i] & ALL_SLOTS;
-      const u64 base = i * layer.opponentPlacements;
       const u32 limit = (1u << (SLOTS - a)) - 1;
-      u64 j = 0;
+      u64 j = i * layer.opponentPlacements;
       for (u32 compact = (1u << b) - 1; compact <= limit; compact = nextCombination(compact), j++) {
         const u32 op = depositBits(depositBits(compact, freeSlots), SLOT_MASK);
-        if (certify) {
-          // A lower bound comes from assuming the opponent does as well as their upper bound, and vice versa.
-          float& low = layer.value[base + j];
-          float& high = layer.upper[base + j];
-          low = std::max(low, (float)evaluate<true>(me, op));
-          high = std::min(high, (float)evaluate<false>(me, op));
-          largest = std::max(largest, (double)(high - low));
-        } else {
-          const float updated = (float)evaluate(me, op);
-          float& stored = layer.value[base + j];
-          largest = std::max(largest, (double)std::fabs(updated - stored));
-          stored = updated;
-        }
+        largest = std::max(largest, fn(me, op, j));
       }
     }
     return largest;
   }
 
-  template <bool certify = false>
-  void solve(double tolerance) {
-    // Earlier-finishing layer pairs first: fewer pawns left on the board = closer to the end.
-    for (int total = 2; total <= 2 * pawns; total++) {
-      for (int a = std::max(1, total - pawns); a <= std::min(pawns, total - 1); a++) {
-        const int b = total - a;
-        if (a > b) continue;  // handle (a,b) and (b,a) together
-        std::vector<Layer*> group = {&layerFor(a, b)};
-        if (a != b) group.push_back(&layerFor(b, a));
+  // One in-place pass over a layer. Returns the largest change in units (1 unit = 1/65535).
+  double sweep(Layer& layer) {
+    T* values = layer.owned.data();
+    return forEachPosition(layer, [&](u32 me, u32 op, u64 j) {
+      const T updated = S::nearest(evaluate(me, op));
+      const double change = S::unitsBetween(updated, values[j]);
+      values[j] = updated;
+      return change;
+    });
+  }
 
-        u64 states = 0;
-        for (Layer* layer : group) {
-          if (certify) {
-            layer->value.assign(layer->size(), 0.0f);  // lower bounds start at 0% ...
-            layer->upper.assign(layer->size(), 1.0f);  // ... and upper bounds at 100%
-          } else {
-            layer->value.assign(layer->size(), 0.5f);
-          }
-          states += layer->size();
-        }
+  // Certify mode: tightens lower bounds (in `owned`) and upper bounds. Returns the widest gap in units.
+  double sweepBounds(Layer& layer) {
+    T* low = layer.owned.data();
+    T* high = layer.upper.data();
+    return forEachPosition(layer, [&](u32 me, u32 op, u64 j) {
+      low[j] = std::max(low[j], S::below(evaluate<true>(me, op)));
+      high[j] = std::min(high[j], S::above(evaluate<false>(me, op)));
+      return S::unitsBetween(high[j], low[j]);
+    });
+  }
 
-        const auto start = std::chrono::steady_clock::now();
-        int sweeps = 0;
-        double change;
-        do {
-          change = 0;
-          for (Layer* layer : group) change = std::max(change, sweep<certify>(*layer));
-          sweeps++;
-          if (certify && sweeps % 25 == 0) {
-            printf("    sweep %d: widest gap between bounds %.3e\n", sweeps, change);
-            fflush(stdout);
-          }
-        } while (change > tolerance && sweeps < 2000);
-        const double seconds =
-            std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+  // Layer groups in the order they must be solved (fewer pawns left on the board first).
+  // Each group is a layer plus its mirror image (a,b) & (b,a), which depend on each other.
+  std::vector<LayerId> solveOrder() const {
+    std::vector<LayerId> order;
+    for (int total = 2; total <= 2 * pawns; total++)
+      for (int a = std::max(1, total - pawns); a <= std::min(pawns, total - 1); a++)
+        if (a <= total - a) order.push_back({a, total - a});
+    return order;
+  }
 
-        printf("  layers %d-%d%s: %13llu positions, %4d sweeps, %9.2f s, %6.1f ns/position/sweep\n", a, b,
-               a != b ? " & reverse" : "          ", (unsigned long long)states, sweeps, seconds,
-               1e9 * seconds / ((double)states * sweeps));
+  static std::vector<LayerId> group(int a, int b) {
+    if (a == b) return {{a, b}};
+    return {{a, b}, {b, a}};
+  }
+
+  // Layers reached by bearing off from a group: from (a,b) to (b,a-1), and from (b,a) to (a,b-1).
+  std::vector<LayerId> dependencies(int a, int b) const {
+    std::vector<LayerId> deps;
+    if (a > 1) deps.push_back({b, a - 1});
+    if (b > 1 && a != b) deps.push_back({a, b - 1});
+    return deps;
+  }
+
+  void releaseAllExcept(const std::vector<LayerId>& keep) {
+    for (Layer& layer : layers)
+      if (std::find(keep.begin(), keep.end(), LayerId{layer.mine, layer.theirs}) == keep.end()) layer.release();
+  }
+
+  // Solves every layer, saving each to disk. Skips saved layers and resumes from checkpoints.
+  void solve(double toleranceUnits, double checkpointMinutes) {
+    fs::create_directories(dataFolder);
+    const auto runStart = Clock::now();
+
+    for (auto [a, b] : solveOrder()) {
+      const auto members = group(a, b);
+      const char* mirror = a != b ? " & reverse" : "          ";
+
+      bool done = true;
+      for (auto [x, y] : members) done = done && isSaved(x, y);
+      if (done) {
+        printf("  layers %d-%d%s: already saved, skipping\n", a, b, mirror);
         fflush(stdout);
+        continue;
       }
+
+      std::vector<LayerId> needed = members;
+      for (auto dep : dependencies(a, b)) needed.push_back(dep);
+      releaseAllExcept(needed);
+      for (auto [x, y] : dependencies(a, b)) useSavedLayer(x, y);
+
+      u64 positions = 0;
+      bool resumed = false;
+      for (auto [x, y] : members) {
+        Layer& layer = layerFor(x, y);
+        layer.mapped.close();
+        layer.owned.assign(layer.size, S::nearest(0.5));
+        if (readArray(checkpointPath(x, y), layer.owned.data(), layer.size)) resumed = true;
+        layer.values = layer.owned.data();
+        positions += layer.size;
+      }
+      if (resumed) printf("  layers %d-%d%s: resuming from checkpoint\n", a, b, mirror);
+
+      const auto start = Clock::now();
+      auto lastCheckpoint = Clock::now();
+      const bool big = positions > 50'000'000;
+      int sweeps = 0, sinceImprovement = 0;
+      double change, smallest = 1e300;
+      do {
+        const auto sweepStart = Clock::now();
+        change = 0;
+        for (auto [x, y] : members) change = std::max(change, sweep(layerFor(x, y)));
+        sweeps++;
+        if (big) {
+          printf("    layers %d-%d sweep %d: largest change %.0f units (stops at %.0f), %.0f s\n", a, b, sweeps,
+                 change, toleranceUnits, secondsSince(sweepStart));
+          fflush(stdout);
+        }
+        if (change > toleranceUnits && secondsSince(lastCheckpoint) > 60 * checkpointMinutes) {
+          for (auto [x, y] : members)
+            writeArray(checkpointPath(x, y), layerFor(x, y).owned.data(), layerFor(x, y).size);
+          printf("    checkpoint saved\n");
+          fflush(stdout);
+          lastCheckpoint = Clock::now();
+        }
+        if (change < smallest * 0.999) smallest = change, sinceImprovement = 0;
+        else sinceImprovement++;
+      } while (change > toleranceUnits && !(sinceImprovement >= 30 && change < 20));  // 20 units: only a rounding plateau
+      if (change > toleranceUnits)
+        printf("    note: stopped at a change of %.3f units, the limit of this storage format's rounding\n", change);
+
+      for (auto [x, y] : members) {
+        Layer& layer = layerFor(x, y);
+        if (!writeArray(layerPath(x, y), layer.owned.data(), layer.size)) {
+          fprintf(stderr, "Could not save %s (is the disk full?)\n", layerPath(x, y).string().c_str());
+          exit(1);
+        }
+        std::error_code ignored;
+        fs::remove(checkpointPath(x, y), ignored);
+      }
+      const double seconds = secondsSince(start);
+      printf("  layers %d-%d%s: %13llu positions, %4d sweeps, %8.1f s, %6.1f ns/position/sweep  (total %.1f min)\n",
+             a, b, mirror, (unsigned long long)positions, sweeps, seconds,
+             1e9 * seconds / ((double)positions * sweeps), secondsSince(runStart) / 60);
+      fflush(stdout);
     }
   }
 
-  // The verification pass: recompute every single stored position from its successors and report the
-  // largest disagreement. For a correct solution this is ~0 (up to the convergence tolerance).
-  double fullResidual() {
+  // Makes every saved layer readable (mapped from disk; the OS loads only what's used).
+  void useAllSavedLayers() {
+    for (auto [a, b] : solveOrder())
+      for (auto [x, y] : group(a, b)) useSavedLayer(x, y);
+  }
+
+  // Recomputes every saved position from its successors. Returns the largest disagreement (probability).
+  double verify() {
     double worst = 0;
-    for (Layer& layer : layers) {
-      if (layer.value.empty()) continue;
-      const int a = layer.mine, b = layer.theirs;
-      std::vector<u32> mySlotSets;
-      for (u32 set = (1u << a) - 1; set <= ALL_SLOTS; set = nextCombination(set)) mySlotSets.push_back(set);
-#pragma omp parallel for schedule(dynamic, 64) reduction(max : worst)
-      for (size_t i = 0; i < mySlotSets.size(); i++) {
-        const u32 me = depositBits(mySlotSets[i], SLOT_MASK);
-        const u32 freeSlots = ~mySlotSets[i] & ALL_SLOTS;
-        const u32 limit = (1u << (SLOTS - a)) - 1;
-        u64 j = i * layer.opponentPlacements;
-        for (u32 compact = (1u << b) - 1; compact <= limit; compact = nextCombination(compact), j++) {
-          const u32 op = depositBits(depositBits(compact, freeSlots), SLOT_MASK);
-          worst = std::max(worst, std::fabs(evaluate(me, op) - layer.value[j]));
-        }
+    for (auto [a, b] : solveOrder()) {
+      const auto members = group(a, b);
+      std::vector<LayerId> needed = members;
+      for (auto dep : dependencies(a, b)) needed.push_back(dep);
+      releaseAllExcept(needed);
+      for (auto [x, y] : needed) useSavedLayer(x, y);
+      for (auto [x, y] : members) {
+        const Layer& layer = layerFor(x, y);
+        const double err = forEachPosition(
+            layer, [&](u32 me, u32 op, u64 j) { return std::fabs(evaluate(me, op) - S::get(layer.values[j])); });
+        printf("  layer %d-%d: largest error %.2e\n", x, y, err);
+        fflush(stdout);
+        worst = std::max(worst, err);
       }
     }
     return worst;
   }
 
-  u64 positionCount() const {
-    u64 total = 0;
-    for (const Layer& layer : layers)
-      if (layer.mine && layer.theirs) total += layer.size();
-    return total;
+  // Certify mode (in memory; small games): bounds that every valid solution must lie between.
+  void certify(double toleranceUnits) {
+    for (auto [a, b] : solveOrder()) {
+      const auto members = group(a, b);
+      for (auto [x, y] : members) {
+        Layer& layer = layerFor(x, y);
+        layer.owned.assign(layer.size, S::nearest(0.0));
+        layer.upper.assign(layer.size, S::nearest(1.0));
+        layer.values = layer.owned.data();
+      }
+      // Stop when the bounds are close enough, or when they stop getting closer (rounding limit).
+      int sweeps = 0, sinceImprovement = 0;
+      double gap, narrowest = 1e300;
+      do {
+        gap = 0;
+        for (auto [x, y] : members) gap = std::max(gap, sweepBounds(layerFor(x, y)));
+        sweeps++;
+        if (gap < narrowest * 0.999) narrowest = gap, sinceImprovement = 0;
+        else sinceImprovement++;
+      } while (gap > toleranceUnits && sinceImprovement < 30);
+      printf("  layers %d-%d: bounds within %.2f units (%.1e) after %d sweeps\n", a, b, gap, gap / SCALE, sweeps);
+      fflush(stdout);
+    }
   }
 };
 
-// ---------------------------------------------------------------- simulation
+// =============================================================== simulation
 
 int rollSticks(std::mt19937_64& rng) {
   const int lights = __builtin_popcount(rng() & 0xF);
@@ -366,7 +674,7 @@ u32 startingPawns(int pawns, bool evenHouses) {
   return mask;
 }
 
-enum Opponent { RANDOM, MEDIUM, PERFECT };
+enum Player { RANDOM, MEDIUM, PERFECT };
 
 // The website's Medium computer: bear off > safe house > capture > ordinary move > House of Water.
 int mediumPriority(const Move& move) {
@@ -377,7 +685,8 @@ int mediumPriority(const Move& move) {
   return 3;
 }
 
-int chooseMove(Solver& solver, Opponent who, u32 me, u32 op, int roll, const Move* moves, int count,
+template <typename SolverT>
+int chooseMove(SolverT& solver, Player who, u32 me, u32 op, int roll, const Move* moves, int count,
                std::mt19937_64& rng) {
   if (who == PERFECT) {
     int best[6];
@@ -396,9 +705,10 @@ int chooseMove(Solver& solver, Opponent who, u32 me, u32 op, int roll, const Mov
   return (int)(rng() % count);
 }
 
-// Plays `games` games: the perfect player against `opponent`, alternating who moves first.
+// The perfect player against `opponent`, alternating who moves first.
 // Returns { perfect player's win rate, first mover's win rate }.
-std::pair<double, double> simulate(Solver& solver, Opponent opponent, int games, std::mt19937_64& rng) {
+template <typename SolverT>
+std::pair<double, double> simulate(SolverT& solver, Player opponent, int games, std::mt19937_64& rng) {
   long perfectWins = 0, firstMoverWins = 0;
   Move moves[8];
   for (int g = 0; g < games; g++) {
@@ -411,7 +721,7 @@ std::pair<double, double> simulate(Solver& solver, Opponent opponent, int games,
       const int roll = rollSticks(rng);
       const int count = legalMoves(me, op, roll, moves);
       if (count > 0) {
-        const Opponent who = toMove == perfectSeat ? PERFECT : opponent;
+        const Player who = toMove == perfectSeat ? PERFECT : opponent;
         applyMove(me, op, moves[chooseMove(solver, who, me, op, roll, moves, count, rng)]);
         if (me == 0) {
           perfectWins += toMove == perfectSeat;
@@ -425,59 +735,157 @@ std::pair<double, double> simulate(Solver& solver, Opponent opponent, int games,
   return {(double)perfectWins / games, (double)firstMoverWins / games};
 }
 
-// ---------------------------------------------------------------- comparison with version 1 (30-house tables)
+// =============================================================== command line
 
-// Checks every position in this solution against a table saved by the first version of the solver,
-// which also stored (impossible) positions with a pawn on house 27.
-void compareWithVersion1(Solver& solver, const std::string& path) {
-  FILE* file = fopen(path.c_str(), "rb");
-  if (!file) {
-    printf("Could not open %s\n", path.c_str());
-    return;
-  }
-  const int n = solver.pawns;
-  std::vector<std::vector<float>> old((n + 1) * (n + 1));
-  for (int a = 0; a <= n; a++)
-    for (int b = 0; b <= n; b++) {
-      if (!a || !b) continue;
-      old[a * (n + 1) + b].resize(BINOMIAL[HOUSES][a] * BINOMIAL[HOUSES - a][b]);
-      if (fread(old[a * (n + 1) + b].data(), sizeof(float), old[a * (n + 1) + b].size(), file) !=
-          old[a * (n + 1) + b].size()) {
-        printf("Saved file is shorter than expected\n");
-        fclose(file);
-        return;
-      }
-    }
-  fclose(file);
-
-  double worst = 0;
-  u64 compared = 0;
-  for (Layer& layer : solver.layers) {
-    if (layer.value.empty()) continue;
-    const int a = layer.mine, b = layer.theirs;
-    const std::vector<float>& oldLayer = old[a * (n + 1) + b];
-    u64 j = 0;
-    for (u32 mine = (1u << a) - 1; mine <= ALL_SLOTS; mine = nextCombination(mine)) {
-      const u32 me = depositBits(mine, SLOT_MASK);
-      const u32 freeSlots = ~mine & ALL_SLOTS;
-      for (u32 compact = (1u << b) - 1; compact <= (1u << (SLOTS - a)) - 1; compact = nextCombination(compact), j++) {
-        const u32 op = depositBits(depositBits(compact, freeSlots), SLOT_MASK);
-        const u64 oldIndex = combinationRank(me) * BINOMIAL[HOUSES - a][b] +
-                             combinationRank(extractBits(op, ~me & BOARD_MASK));
-        worst = std::max(worst, (double)std::fabs(oldLayer[oldIndex] - layer.value[j]));
-        compared++;
-      }
-    }
-  }
-  printf("Compared %llu positions with version 1: largest difference %.2e\n", (unsigned long long)compared, worst);
+void usage() {
+  printf(
+      "Senet solver\n\n"
+      "  solver solve <pawns> --data <folder> [--precise] [--tolerance <units>] [--checkpoint-minutes <m>]\n"
+      "      Solve the game and save every layer in <folder>. If stopped, run the same command to resume.\n"
+      "      Values are 16-bit by default; --precise stores 32-bit values (twice the memory and disk).\n"
+      "      Every command below takes --precise too, to read 32-bit results.\n"
+      "      Defaults: stop when no value changes by more than 1 unit (1/65535), or 0.01 units with\n"
+      "      --precise; save a checkpoint every 20 minutes.\n"
+      "  solver verify <pawns> --data <folder>\n"
+      "      Recompute every saved position from the positions it leads to; report the largest error.\n"
+      "  solver simulate <pawns> --data <folder> [--games <n>]\n"
+      "      Perfect vs. perfect, vs. the website's Medium AI, and vs. random (default 100000 games each).\n"
+      "  solver certify <pawns> [tolerance units, default 1] [--data <folder>]\n"
+      "      Prove the solution is unique with 32-bit lower/upper bounds (in memory; small games only).\n"
+      "      With --data, also checks how far a saved solution is from the proven bounds.\n"
+      "  solver benchmark <pawns> <a> <b> [sweeps]\n"
+      "      Time sweeps of one layer (neighbors filled with placeholder values).\n"
+      "  solver check\n"
+      "      Print legal moves for '<me mask> <op mask> <roll>' lines on standard input.\n");
 }
 
-// ---------------------------------------------------------------- main
+struct Options {
+  int pawns = 0;
+  fs::path data;
+  double tolerance = -1;  // units; -1 = the storage format's default
+  double checkpointMinutes = 20;
+  int games = 100000;
+  std::vector<std::string> positional;
+  int threads = 1;
+};
+
+template <typename T>
+int run(const std::string& command, const Options& opt) {
+  using S = Storage<T>;
+  Solver<T> solver(opt.pawns, opt.data);
+  const int pawns = opt.pawns;
+  const double tolerance = opt.tolerance >= 0 ? opt.tolerance : S::DEFAULT_TOLERANCE;
+  const u32 first = startingPawns(pawns, true), second = startingPawns(pawns, false);
+  u64 positions = 0;
+  for (auto [a, b] : solver.solveOrder())
+    for (auto [x, y] : Solver<T>::group(a, b)) positions += solver.layerFor(x, y).size;
+
+  if ((command == "solve" || command == "verify" || command == "simulate") && opt.data.empty()) {
+    fprintf(stderr, "Please give a folder for the saved layers with --data <folder>\n");
+    return 1;
+  }
+
+  if (command == "solve") {
+    printf("Solving %d-pawn Senet (%s): %llu positions, %.1f GB on disk, %d threads\n", pawns, S::NAME,
+           (unsigned long long)positions, positions * sizeof(T) / 1e9, opt.threads);
+    fflush(stdout);
+    const auto start = Clock::now();
+    solver.solve(tolerance, opt.checkpointMinutes);
+    printf("Done in %.1f minutes.\n", secondsSince(start) / 60);
+    solver.releaseAllExcept({});
+    solver.useSavedLayer(pawns, pawns);
+    printf("Starting position: first player wins %.4f%% with perfect play by both sides\n",
+           100 * solver.valueOf(first, second));
+    return 0;
+  }
+
+  if (command == "verify") {
+    printf("Verifying %d-pawn Senet (%s, %llu positions)\n", pawns, S::NAME, (unsigned long long)positions);
+    const double worst = solver.verify();
+    printf("Largest error over every position: %.2e\n", worst);
+    return 0;
+  }
+
+  if (command == "simulate") {
+    solver.useAllSavedLayers();
+    std::mt19937_64 rng(12345);
+    const double predicted = solver.valueOf(first, second);
+    const double firstMover = simulate(solver, PERFECT, opt.games, rng).second;
+    printf("Perfect vs. perfect (%d games): first mover won %.2f%%  (predicted %.2f%%)\n", opt.games,
+           100 * firstMover, 100 * predicted);
+    printf("Perfect vs. Medium  (%d games): perfect won %.2f%%\n", opt.games,
+           100 * simulate(solver, MEDIUM, opt.games, rng).first);
+    printf("Perfect vs. random  (%d games): perfect won %.2f%%\n", opt.games,
+           100 * simulate(solver, RANDOM, opt.games, rng).first);
+    return 0;
+  }
+
+  if (command == "benchmark" && opt.positional.size() >= 2) {
+    const int a = atoi(opt.positional[0].c_str()), b = atoi(opt.positional[1].c_str());
+    const int sweeps = opt.positional.size() >= 3 ? atoi(opt.positional[2].c_str()) : 2;
+    for (auto [x, y] : {LayerId{a, b}, LayerId{b, a}, LayerId{b, a - 1}}) {
+      if (x < 1 || y < 1) continue;
+      auto& layer = solver.layerFor(x, y);
+      if (layer.owned.empty()) {
+        layer.owned.assign(layer.size, S::nearest(0.5));
+        layer.values = layer.owned.data();
+      }
+    }
+    auto& target = solver.layerFor(a, b);
+    for (int s = 0; s < sweeps; s++) {
+      const auto start = Clock::now();
+      solver.sweep(target);
+      const double seconds = secondsSince(start);
+      printf("layer %d-%d (%s): %llu positions, sweep %.1f s, %.1f ns/position (%d threads)\n", a, b, S::NAME,
+             (unsigned long long)target.size, seconds, 1e9 * seconds / target.size, opt.threads);
+      fflush(stdout);
+    }
+    return 0;
+  }
+
+  usage();
+  return 1;
+}
+
+// Certification always uses 32-bit precision; with --data it also checks a saved solution against the bounds.
+template <typename Saved>
+int certify(const Options& opt) {
+  Solver<float> bounds(opt.pawns);
+  const double tolerance = opt.positional.empty() ? 1 : atof(opt.positional[0].c_str());
+  const u32 first = startingPawns(opt.pawns, true), second = startingPawns(opt.pawns, false);
+  printf("Certifying %d-pawn Senet: bounds must close to %.2f units (%.1e)\n", opt.pawns, tolerance, tolerance / SCALE);
+  bounds.certify(tolerance);
+  printf("Starting position: first player wins between %.5f%% and %.5f%%\n", 100 * bounds.valueOf(first, second),
+         100 * Storage<float>::get(*bounds.slotFor<true>(first, second)));
+  if (opt.data.empty()) return 0;
+
+  Solver<Saved> saved(opt.pawns, opt.data);
+  double outside = 0, widest = 0;
+  for (auto [a, b] : bounds.solveOrder())
+    for (auto [x, y] : Solver<float>::group(a, b)) {
+      saved.useSavedLayer(x, y);
+      const auto& layer = bounds.layerFor(x, y);
+      const Saved* answer = saved.layerFor(x, y).values;
+      for (u64 i = 0; i < layer.size; i++) {
+        const double v = Storage<Saved>::get(answer[i]);
+        outside = std::max({outside, layer.owned[i] - v, v - layer.upper[i]});
+        widest = std::max(widest, (double)layer.upper[i] - layer.owned[i]);
+      }
+    }
+  printf("Widest proven range: %.2e. Saved %s solution lies outside the proven range by at most %.2e\n", widest,
+         Storage<Saved>::NAME, outside);
+  return 0;
+}
 
 int main(int argc, char** argv) {
   initBinomials();
-  if (argc >= 2 && std::string(argv[1]) == "check") {
-    // Input lines: "<me mask> <op mask> <roll>". Output: moves as from:type:landsOn, sorted.
+  if (argc < 2) {
+    usage();
+    return 1;
+  }
+  const std::string command = argv[1];
+
+  if (command == "check") {
     unsigned me, op;
     int roll;
     Move moves[8];
@@ -495,96 +903,30 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  if (argc >= 5 && std::string(argv[1]) == "benchmark") {
-    // Time a few sweeps of one big layer (its neighbors are filled with placeholder values).
-    // Usage: ./solver benchmark <pawnsPerSide> <mine> <theirs> [sweeps]
-    const int pawns = atoi(argv[2]), a = atoi(argv[3]), b = atoi(argv[4]);
-    const int sweeps = argc >= 6 ? atoi(argv[5]) : 2;
-    Solver solver(pawns);
-    for (auto [x, y] : {std::pair{a, b}, std::pair{b, a}, std::pair{b, a - 1}}) {
-      if (x < 1 || y < 1) continue;
-      Layer& layer = solver.layerFor(x, y);
-      if (layer.value.empty()) layer.value.assign(layer.size(), 0.5f);
-    }
-    Layer& target = solver.layerFor(a, b);
-    for (int s = 0; s < sweeps; s++) {
-      const auto start = std::chrono::steady_clock::now();
-      solver.sweep(target);
-      const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-      printf("layer %d-%d: %llu positions, sweep %.1f s, %.1f ns/position\n", a, b,
-             (unsigned long long)target.value.size(), seconds, 1e9 * seconds / target.value.size());
-      fflush(stdout);
-    }
-    return 0;
-  }
-
-  if (argc < 3 || std::string(argv[1]) != "solve") {
-    fprintf(stderr,
-            "usage: %s solve <pawnsPerSide> [tolerance] [--certify] [--simulate N] [--save file] "
-            "[--compare-v1 file]\n",
-            argv[0]);
+  if (argc < 3) {
+    usage();
     return 1;
   }
-  const int pawns = atoi(argv[2]);
-  double tolerance = 1e-6;
-  int games = 0;
-  bool certify = false;
-  std::string saveTo, compareTo;
+  Options opt;
+  opt.pawns = atoi(argv[2]);
+  if (opt.pawns < 1 || opt.pawns > 5) {
+    fprintf(stderr, "pawns must be 1 to 5\n");
+    return 1;
+  }
+  bool precise = false;
   for (int i = 3; i < argc; i++) {
-    std::string arg = argv[i];
-    if (arg == "--simulate" && i + 1 < argc) games = atoi(argv[++i]);
-    else if (arg == "--save" && i + 1 < argc) saveTo = argv[++i];
-    else if (arg == "--compare-v1" && i + 1 < argc) compareTo = argv[++i];
-    else if (arg == "--certify") certify = true;
-    else tolerance = atof(arg.c_str());
+    const std::string arg = argv[i];
+    if (arg == "--data" && i + 1 < argc) opt.data = argv[++i];
+    else if (arg == "--tolerance" && i + 1 < argc) opt.tolerance = atof(argv[++i]);
+    else if (arg == "--checkpoint-minutes" && i + 1 < argc) opt.checkpointMinutes = atof(argv[++i]);
+    else if (arg == "--games" && i + 1 < argc) opt.games = atoi(argv[++i]);
+    else if (arg == "--precise") precise = true;
+    else opt.positional.push_back(arg);
   }
-
-  Solver solver(pawns);
 #ifdef _OPENMP
-  printf("%s %d-pawn Senet (%llu positions) with %d threads, tolerance %.0e\n", certify ? "Certifying" : "Solving",
-         pawns, (unsigned long long)solver.positionCount(), omp_get_max_threads(), tolerance);
+  opt.threads = omp_get_max_threads();
 #endif
-  const auto start = std::chrono::steady_clock::now();
-  if (certify) solver.solve<true>(tolerance);
-  else solver.solve<false>(tolerance);
-  printf("Total time: %.1f s\n",
-         std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count());
 
-  const u32 first = startingPawns(pawns, true), second = startingPawns(pawns, false);
-  if (certify) {
-    double widest = 0;
-    for (Layer& layer : solver.layers)
-      for (u64 i = 0; i < layer.value.size(); i++) widest = std::max(widest, (double)(layer.upper[i] - layer.value[i]));
-    printf("Certified: every position's true value is pinned between bounds at most %.2e apart\n", widest);
-    printf("Starting position: first player wins between %.5f%% and %.5f%%\n",
-           100 * solver.valueOf<false>(first, second), 100 * solver.valueOf<true>(first, second));
-    // From here on, use the midpoint of the bounds as the answer.
-    for (Layer& layer : solver.layers)
-      for (u64 i = 0; i < layer.value.size(); i++) layer.value[i] = 0.5f * (layer.value[i] + layer.upper[i]);
-  } else {
-    printf("Starting position: first player wins %.4f%% with perfect play by both sides\n",
-           100 * solver.valueOf(first, second));
-    printf("Verification pass over every position: largest error %.2e\n", solver.fullResidual());
-  }
-
-  if (!compareTo.empty()) compareWithVersion1(solver, compareTo);
-
-  if (games > 0) {
-    std::mt19937_64 rng(12345);
-    auto [vsSelf, firstMover] = simulate(solver, PERFECT, games, rng);
-    (void)vsSelf;
-    printf("Perfect vs. perfect (%d games): first mover won %.2f%%  (predicted %.2f%%)\n", games, 100 * firstMover,
-           100 * solver.valueOf(first, second));
-    printf("Perfect vs. Medium  (%d games): perfect won %.2f%%\n", games, 100 * simulate(solver, MEDIUM, games, rng).first);
-    printf("Perfect vs. random  (%d games): perfect won %.2f%%\n", games, 100 * simulate(solver, RANDOM, games, rng).first);
-  }
-
-  if (!saveTo.empty()) {
-    FILE* file = fopen(saveTo.c_str(), "wb");
-    for (Layer& layer : solver.layers)
-      if (!layer.value.empty()) fwrite(layer.value.data(), sizeof(float), layer.value.size(), file);
-    fclose(file);
-    printf("Saved values to %s\n", saveTo.c_str());
-  }
-  return 0;
+  if (command == "certify") return precise ? certify<float>(opt) : certify<u16>(opt);
+  return precise ? run<float>(command, opt) : run<u16>(command, opt);
 }
