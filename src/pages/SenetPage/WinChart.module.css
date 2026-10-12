@@ -1,0 +1,147 @@
+.chart {
+  --line: var(--color-accent);
+
+  position: relative;
+  width: 100%;
+  user-select: none;
+}
+
+.chart svg {
+  display: block;
+  overflow: visible;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.grid,
+.midline {
+  stroke: #d5dbe6;
+  stroke-width: 1;
+}
+
+.midline {
+  stroke: #b3bccb;
+}
+
+.yLabel,
+.xLabel,
+.xTitle {
+  fill: var(--color-text-subtle);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.yLabel {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.xLabel {
+  text-anchor: middle;
+}
+
+.xTitle {
+  text-anchor: end;
+  font-style: italic;
+}
+
+.area {
+  fill: var(--line);
+  opacity: 0.1;
+}
+
+.line {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  stroke: var(--color-background); /* 2px ring in the surface color */
+  stroke-width: 2;
+}
+
+.inaccuracy {
+  fill: var(--color-inaccuracy);
+  background: var(--color-inaccuracy);
+}
+
+.mistake {
+  fill: var(--color-mistake);
+  background: var(--color-mistake);
+}
+
+.blunder {
+  fill: var(--color-blunder);
+  background: var(--color-blunder);
+}
+
+.luckMark {
+  fill: #8a93a3;
+}
+
+.selectedLine {
+  stroke: var(--line);
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.selectedDot {
+  fill: var(--line);
+  stroke: var(--color-background);
+  stroke-width: 2;
+}
+
+.crosshair {
+  stroke: #8a93a3;
+  stroke-width: 1;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  width: 180px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+  color: var(--color-text);
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
+  pointer-events: none;
+}
+
+.key {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 16px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.key li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.keyDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.keyTriangle {
+  color: #8a93a3;
+  font-size: 10px;
+  letter-spacing: -1px;
+}

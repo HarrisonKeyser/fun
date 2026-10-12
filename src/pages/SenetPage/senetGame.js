@@ -67,7 +67,14 @@ export function createGame(opponent = OPPONENTS.HUMAN, computerColor = null) {
     opponent,
     computerColor,
     lastEvent: null, // { type: one of EVENTS, id }
+    // Every turn so far, for the game review: { player, roll, board (before the turn), move or null }
+    history: [],
   };
+}
+
+function recordTurn(game, move) {
+  const turn = { player: game.currentPlayer, roll: game.roll, board: game.board, move };
+  return [...game.history, turn];
 }
 
 function endTurn(game) {
@@ -99,23 +106,25 @@ export function senetReducer(game, action) {
       const { move } = action;
       const player = game.currentPlayer;
       const board = applyMove(game.board, move);
+      const history = recordTurn(game, move);
 
       const event = EVENT_FOR_MOVE_TYPE[move.type];
 
       if (move.type !== MOVE_TYPES.BEAR_OFF) {
-        return withEvent(endTurn({ ...game, board }), event);
+        return withEvent(endTurn({ ...game, board, history }), event);
       }
 
       const borneOff = { ...game.borneOff, [player]: game.borneOff[player] + 1 };
       if (borneOff[player] === PAWNS_PER_PLAYER) {
-        const finished = { ...game, board, borneOff, winner: player, roll: null, selectedHouse: null };
+        const finished = { ...game, board, borneOff, history, winner: player, roll: null, selectedHouse: null };
         return withEvent(finished, EVENTS.WIN);
       }
-      return withEvent(endTurn({ ...game, board, borneOff }), event);
+      return withEvent(endTurn({ ...game, board, borneOff, history }), event);
     }
 
     case ACTIONS.PASS:
-      return endTurn(game);
+      if (!game.roll) return game;
+      return endTurn({ ...game, history: recordTurn(game, null) });
 
     default:
       return game;

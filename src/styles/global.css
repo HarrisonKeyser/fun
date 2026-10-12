@@ -16,6 +16,12 @@
   --color-success: #28a745;
   --color-success-hover: #218838;
 
+  /* Move-quality colors for the Senet game review (standard warning / serious / critical steps).
+     They always appear with a symbol or label, never as color alone. */
+  --color-inaccuracy: #fab219;
+  --color-mistake: #ec835a;
+  --color-blunder: #d03b3b;
+
   /* Type */
   --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
     'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
