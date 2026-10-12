@@ -84,6 +84,6 @@ With 32 GB of RAM, add `--precise` to every command to store 32-bit values inste
 | 2 | 165,242 | 52.54% (certified 52.5423–52.5429%) | — | 67.1% |
 | 3 | 12,230,750 | 52.73% (certified 52.7251–52.7257%; self-play 52.72% over 200,000 games) | 65.7% | 75.6% |
 | 4 | 437,373,650 | 52.44% (self-play 52.58% over 100,000 games; verified, largest error 2.3e-5) | 68.8% | 80.4% |
-| 5 (real game) | 8,560,690,670 | not yet run | | |
+| 5 (real game) | 8,560,690,670 | **52.2515%** (16-bit; solved in 7.3 hours on a Ryzen 5 7500X3D, 12 threads) | | |
 
 Positions never include a pawn on house 27, since the House of Water always sends it straight back.
