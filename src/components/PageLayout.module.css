@@ -28,6 +28,10 @@
   max-width: calc(1280px + 2 * var(--page-gutter));
 }
 
+.full {
+  max-width: calc(1600px + 2 * var(--page-gutter));
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

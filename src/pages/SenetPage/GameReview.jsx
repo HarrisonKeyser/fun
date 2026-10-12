@@ -21,9 +21,16 @@ export default function GameReview({ analysis, step, onSelectStep, perspective, 
   const { turns, points: chances, summaries } = analysis;
   const listRef = useRef(null);
 
-  // Keep the selected move visible in the move list.
+  // Keep the selected move visible in the move list, scrolling only the list (never the page).
   useEffect(() => {
-    listRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest' });
+    const list = listRef.current;
+    const row = list?.querySelector('[aria-current="true"]')?.parentElement;
+    if (!row) return;
+    const top = row.offsetTop - list.offsetTop;
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (top + row.offsetHeight > list.scrollTop + list.clientHeight) {
+      list.scrollTop = top + row.offsetHeight - list.clientHeight;
+    }
   }, [step]);
 
   // Arrow keys step through the game (unless a form control has focus).
@@ -136,7 +143,8 @@ function PlayerSummary({ summary, name }) {
     <div className={styles.summary}>
       <h3>
         <span className={`${styles.pawnDot} ${styles[player]}`} aria-hidden="true" />
-        {name} <span className={styles.color}>({playerName(player)})</span>
+        {name}
+        {name !== playerName(player) && <span className={styles.color}>({playerName(player)})</span>}
       </h3>
       <dl>
         <div>
