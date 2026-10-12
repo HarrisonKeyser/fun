@@ -35,6 +35,7 @@ If an Actions run shows a red ✗, the live site is left as it was. Click into t
 | Page web addresses                          | `src/routePaths.js`                   |
 | Site-wide colors, fonts, spacing            | `src/styles/global.css`               |
 | Browser-tab title, link-preview text        | `index.html`                          |
+| Senet Grandmaster's data address            | `src/pages/SenetPage/grandmaster.js`  |
 
 Images are in `public/images/` and sounds are in `public/audio/`.
 
@@ -52,9 +53,12 @@ src/
       senetRules.js     The game rules, separate from the display
       senetRules.test.js
       computerPlayer.js The Easy and Medium computer opponents
+      grandmaster.js    The Grandmaster opponent (perfect play from the solved game)
   styles/global.css     Site-wide styles
 public/                 Files copied as-is (favicon, audio, CNAME for the custom domain)
 scripts/                Build helper that makes every page address work on GitHub Pages
+tools/senet-solver/     The program that solved Senet (run on a PC; not part of the site)
+tools/senet-data-worker/ The Cloudflare Worker that serves the solution to Grandmaster
 drafts/                 Unfinished work, not part of the site (e.g. the Baseball post)
 .github/workflows/      The automatic publishing setup
 ```
