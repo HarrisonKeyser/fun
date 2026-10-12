@@ -48,7 +48,9 @@
 #include <omp.h>
 #endif
 #ifdef _WIN32
+#ifndef NOMINMAX  // MSYS2's compiler already defines it
 #define NOMINMAX
+#endif
 #include <windows.h>
 #else
 #include <fcntl.h>
