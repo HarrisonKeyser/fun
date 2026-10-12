@@ -13,7 +13,7 @@ export const BEJEWELED_BOT = {
     'Beating Endless mode in Bejeweled 2 on the Xbox 360 means clearing 280 levels. That requires scoring about 60 million points, which takes most humans between 200 and 300 hours of matching geometric gems. As a hardcore completionist, I was determined to earn the Xbox 360 achievement for completing Endless mode.',
     'Unfortunately, Bejeweled 2 for the Xbox 360 has one of the most asinine saving systems you have ever encountered, or will ever encounter, in a video game. When you load your profile, the game loads your save and deletes it. It doesn’t save your progress to your profile again until you quit through the main menu. So if the game crashes, the power goes out, the dog trips over the power cord, or a sibling turns off the Xbox while Bejeweled 2 is running, you permanently lose all of your progress! I slowly made progress over the years, but I wasn’t immune to the random events of life that inevitably happen over a long stretch of time. I lost my progress for the first time about 150 hours in, then again about 50 hours into my second try.',
     'By the time I lost my progress for the second time, it had been over 15 years since I first launched the game, and I had a data science degree and a real adult income. I also didn’t have dozens of hours of free time per week like I did as a kid. So I built a robot to finally beat Bejeweled for me. I wanted to do it without modding the Xbox or the game, because that would be cheating, obviously.',
-    'Instead, my robot watches the TV signal, decides on a move, and presses the buttons. To the Xbox and the game itself, it’s indistinguishable from a real person playing. It played unattended, day and night, and beat all 280 levels in about 10 days of cumulative play, comparable to how long it takes most humans.',
+    'Instead, my robot watches the TV signal, decides on a move, and presses the buttons. To the Xbox and the game itself, it’s indistinguishable from a real person playing. It played unattended, day and night, and beat all 280 levels in about 8 days of cumulative play, comparable to how long it takes most humans.',
   ],
 
   stats: [
@@ -38,6 +38,28 @@ export const BEJEWELED_BOT = {
   demo: {
     heading: 'Watch it think',
     text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot read the board from video; this one gets it straight from the page.',
+  },
+
+  breakdown: {
+    heading: 'Breaking it down',
+    intro:
+      'The whole project can seem overwhelming at first. But it breaks down into three manageable projects:',
+    parts: [
+      {
+        name: 'The hands',
+        text: 'Get computer-generated inputs from Python translated into game inputs on the Xbox. Hit Enter on a line of code and watch the in-game cursor go down, right, up, left.',
+      },
+      {
+        name: 'The eyes',
+        text: 'Get what’s on the TV over to the laptop, and have the laptop see and identify the board accurately.',
+      },
+      {
+        name: 'The brain',
+        text: 'Give the laptop a Bejeweled board, have it find every legal move, and play the “best” one.',
+      },
+    ],
+    outro:
+      'Individually, none of those three projects is that daunting. And once each part was solved, it didn’t take much more work to put all three together.',
   },
 
   pipeline: {

@@ -90,6 +90,39 @@
   text-align: left;
 }
 
+/* Breaking it down: the three sub-projects */
+
+.parts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+@media (min-width: 760px) {
+  .parts {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.partNumber {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.sectionOutro {
+  max-width: 720px;
+  margin: 20px auto 0;
+  text-align: left;
+}
+
 /* How it works: the hardware chain, left to right on wide screens */
 
 .pipeline {

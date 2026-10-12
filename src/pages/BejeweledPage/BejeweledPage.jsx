@@ -5,8 +5,21 @@ import { BEJEWELED_BOT, BEJEWELED_REPO_URL } from '../../content/bejeweledBot.js
 import styles from './BejeweledPage.module.css';
 
 export default function BejeweledPage() {
-  const { title, tagline, intro, stats, figure, videoUrl, videoTitle, demo, pipeline, phases, problems, code } =
-    BEJEWELED_BOT;
+  const {
+    title,
+    tagline,
+    intro,
+    stats,
+    figure,
+    videoUrl,
+    videoTitle,
+    demo,
+    breakdown,
+    pipeline,
+    phases,
+    problems,
+    code,
+  } = BEJEWELED_BOT;
 
   return (
     <PageLayout title={title} width="wide">
@@ -45,6 +58,21 @@ export default function BejeweledPage() {
         <h2 id="demo-heading">{demo.heading}</h2>
         <p className={styles.sectionIntro}>{demo.text}</p>
         <BotDemo />
+      </section>
+
+      <section className={styles.section} aria-labelledby="breakdown-heading">
+        <h2 id="breakdown-heading">{breakdown.heading}</h2>
+        <p className={styles.sectionIntro}>{breakdown.intro}</p>
+        <ol className={styles.parts}>
+          {breakdown.parts.map(({ name, text }, i) => (
+            <li key={name} className={styles.card}>
+              <span className={styles.partNumber}>Part {i + 1}</span>
+              <h3>{name}</h3>
+              <p>{text}</p>
+            </li>
+          ))}
+        </ol>
+        <p className={styles.sectionOutro}>{breakdown.outro}</p>
       </section>
 
       <section className={styles.section} aria-labelledby="pipeline-heading">
