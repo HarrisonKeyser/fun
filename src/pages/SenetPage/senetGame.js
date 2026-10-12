@@ -41,6 +41,7 @@ export const OPPONENTS = {
   HUMAN: 'human',
   COMPUTER_EASY: 'easy',
   COMPUTER_MEDIUM: 'medium',
+  COMPUTER_GRANDMASTER: 'grandmaster',
 };
 
 export const ACTIONS = {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import PageLayout from '../../components/PageLayout.jsx';
 import SenetBoard from './SenetBoard.jsx';
 import CastingSticks from './CastingSticks.jsx';
@@ -12,7 +12,8 @@ import {
   playerName,
   throwSticks,
 } from './senetRules.js';
-import { chooseComputerMove } from './computerPlayer.js';
+import { chooseComputerMove, DIFFICULTIES } from './computerPlayer.js';
+import { createGrandmaster, GRANDMASTER_DATA_URL } from './grandmaster.js';
 import { ACTIONS, createGame, EVENTS, OPPONENTS, senetReducer } from './senetGame.js';
 import { playSenetSound } from './senetSounds.js';
 import styles from './SenetPage.module.css';
@@ -34,12 +35,20 @@ const SOUND_FOR_EVENT = {
 };
 const NO_MOVES_SOUND_DELAY_MS = 350; // let the sticks land before the "no moves" thud
 
+// Grandmaster only appears once its move book is hosted (see grandmaster.js).
+const grandmaster = GRANDMASTER_DATA_URL ? createGrandmaster(GRANDMASTER_DATA_URL) : null;
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function randomColor() {
   return Math.random() < 0.5 ? BLUE : GREEN;
 }
 
 export default function SenetPage() {
   const [game, dispatch] = useReducer(senetReducer, undefined, () => createGame());
+  const [grandmasterOffline, setGrandmasterOffline] = useState(false);
   const { board, currentPlayer, roll, selectedHouse, winner, opponent, computerColor } = game;
 
   const legalMoves = useMemo(
@@ -76,30 +85,54 @@ export default function SenetPage() {
   // The computer's turn plays out in three visible steps: roll, highlight a pawn, move it.
   useEffect(() => {
     if (!isComputerTurn || hasNoMoves) return undefined;
+    const isGrandmaster = opponent === OPPONENTS.COMPUTER_GRANDMASTER && grandmaster;
 
-    let timer;
     if (!roll) {
-      timer = setTimeout(
+      // Grandmaster's lookup doesn't depend on the roll, so start it while the sticks are thrown.
+      if (isGrandmaster) grandmaster.prepare(board, computerColor);
+      const timer = setTimeout(
         () => dispatch({ type: ACTIONS.ROLL, roll: throwSticks() }),
         COMPUTER_ROLL_DELAY_MS,
       );
-    } else if (!selectedMove) {
-      timer = setTimeout(() => {
-        const move = chooseComputerMove(legalMoves, opponent);
-        dispatch({ type: ACTIONS.SELECT, house: move.from });
-      }, COMPUTER_PICK_DELAY_MS);
-    } else {
-      timer = setTimeout(
-        () => dispatch({ type: ACTIONS.MOVE, move: selectedMove }),
-        COMPUTER_MOVE_DELAY_MS,
-      );
+      return () => clearTimeout(timer);
     }
+
+    if (!selectedMove) {
+      const medium = () => chooseComputerMove(legalMoves, DIFFICULTIES.MEDIUM);
+      const choosing = isGrandmaster
+        ? grandmaster
+            .chooseMove(board, computerColor, roll.value)
+            .then((move) => {
+              if (legalMoves.length > 1) setGrandmasterOffline(false); // the move book answered
+              return move ?? medium();
+            })
+            .catch((error) => {
+              console.warn('Grandmaster could not load its move book:', error);
+              setGrandmasterOffline(true);
+              return medium();
+            })
+        : Promise.resolve(chooseComputerMove(legalMoves, opponent));
+
+      let cancelled = false;
+      Promise.all([choosing, wait(COMPUTER_PICK_DELAY_MS)]).then(([move]) => {
+        if (!cancelled) dispatch({ type: ACTIONS.SELECT, house: move.from });
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const timer = setTimeout(
+      () => dispatch({ type: ACTIONS.MOVE, move: selectedMove }),
+      COMPUTER_MOVE_DELAY_MS,
+    );
     return () => clearTimeout(timer);
-  }, [isComputerTurn, hasNoMoves, roll, selectedMove, legalMoves, opponent]);
+  }, [isComputerTurn, hasNoMoves, roll, selectedMove, legalMoves, opponent, board, computerColor]);
 
   function startNewGame(nextOpponent = opponent) {
     const nextComputerColor = nextOpponent === OPPONENTS.HUMAN ? null : randomColor();
     dispatch({ type: ACTIONS.NEW_GAME, opponent: nextOpponent, computerColor: nextComputerColor });
+    setGrandmasterOffline(false);
   }
 
   function handleSquareClick(house) {
@@ -142,11 +175,21 @@ export default function SenetPage() {
           <option value={OPPONENTS.HUMAN}>Human</option>
           <option value={OPPONENTS.COMPUTER_EASY}>Computer (Easy)</option>
           <option value={OPPONENTS.COMPUTER_MEDIUM}>Computer (Medium)</option>
+          {grandmaster && (
+            <option value={OPPONENTS.COMPUTER_GRANDMASTER}>Computer (Grandmaster)</option>
+          )}
         </select>
         <button type="button" className="button" onClick={() => startNewGame()}>
           New Game
         </button>
       </div>
+      {opponent === OPPONENTS.COMPUTER_GRANDMASTER && (
+        <p className={styles.opponentNote}>
+          {grandmasterOffline
+            ? "Grandmaster couldn't load its move book, so it's playing like Medium for now."
+            : 'Grandmaster plays every move perfectly, using a complete solution of all 8.5 billion positions. Luck still matters, so it can be beaten!'}
+        </p>
+      )}
       {vsComputer && (
         <p className={styles.youAre}>
           You are{' '}

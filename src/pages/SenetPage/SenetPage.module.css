@@ -38,6 +38,13 @@
   margin: 8px 0 0;
 }
 
+.opponentNote {
+  max-width: 520px;
+  margin: 8px auto 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;

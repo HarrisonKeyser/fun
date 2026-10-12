@@ -8,5 +8,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    include: ['src/**/*.test.{js,jsx}'], // the solver's check scripts in tools/ are run by hand
   },
 });
