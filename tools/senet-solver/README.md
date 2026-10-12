@@ -8,7 +8,7 @@ This is an offline tool. It isn't part of the website build.
 
 - `solver.cpp` — the solver (C++, uses every CPU core via OpenMP)
 - `cross-check.mjs` — confirms the solver's rules match `src/pages/SenetPage/senetRules.js` exactly
-- `grandmaster-check.mjs` — confirms the website's Grandmaster (`src/pages/SenetPage/grandmaster.js`) reads an export exactly as the solver wrote it
+- `grandmaster-check.mjs` — confirms the website's Grandmaster (`src/pages/SenetPage/grandmaster.js`) reads the solution and picks moves exactly as the solver does
 
 Run the solver with no arguments to see every command.
 
@@ -17,7 +17,7 @@ Run the solver with no arguments to see every command.
 ### One-time setup
 
 1. Open **MSYS2 UCRT64** from the Start menu.
-2. `pacman -Syu` (repeat until it says there's nothing to do), then `pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-zlib git`
+2. `pacman -Syu` (repeat until it says there's nothing to do), then `pacman -S --needed mingw-w64-ucrt-x86_64-gcc git`
 3. `cd ~ && git clone --branch grandmaster-solver https://github.com/HarrisonKeyser/fun.git`
 
 ### Every time you use it
@@ -25,7 +25,7 @@ Run the solver with no arguments to see every command.
 ```bash
 cd ~/fun && git pull                      # get the latest version
 cd tools/senet-solver
-g++ -O3 -march=native -fopenmp -o solver.exe solver.cpp -lz
+g++ -O3 -march=native -fopenmp -o solver.exe solver.cpp
 ```
 
 ### Rehearsal: the 4-pawn game (about 15–30 minutes)
@@ -64,16 +64,11 @@ When it finishes:
 ./solver.exe simulate 5 --data /c/senet/five
 ```
 
-### Making the website's move book
+### Putting it online
 
-The website doesn't need the 17 GB of win chances, only the best move for each position and roll. `export` writes those as compressed files (a few GB, in files of up to 256 MB, sized for web upload forms):
+The website's Grandmaster reads the 25 `.u16` files directly (2 bytes per lookup), from Cloudflare R2 through a small Worker. See `tools/senet-data-worker/README.md` for the upload and setup steps.
 
-```bash
-./solver.exe export 5 --data /c/senet/five --out /c/senet/website
-./solver.exe check-export 5 --data /c/senet/five --out /c/senet/website
-```
-
-`check-export` makes sure every block can be read and that sampled positions in every layer match the solution. Upload everything in `C:\senet\website` (`manifest.json`, `index.bin` and every `moves-*.bin`) to the same folder on the host, then set `MOVE_BOOK_URL` in `src/pages/SenetPage/grandmaster.js` to that folder's address.
+To check the website's code against a solved folder: `node tools/senet-solver/grandmaster-check.mjs ./solver 3 <folder>` (needs Node.js; any solved game size works).
 
 ### Precision
 

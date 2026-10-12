@@ -18,20 +18,17 @@
 //     until nothing changes. A position with no legal moves passes the turn.
 //   - Values are stored as 16-bit integers (probability x 65535) to fit the full game in 16 GB of RAM.
 //
-// BUILD (needs zlib, for the website export)
-//   g++ -O3 -march=native -fopenmp -o solver solver.cpp -lz          (Linux / macOS with Homebrew gcc)
-//   g++ -O3 -march=native -fopenmp -o solver.exe solver.cpp -lz      (Windows, MSYS2 UCRT64)
+// BUILD
+//   g++ -O3 -march=native -fopenmp -o solver solver.cpp          (Linux / macOS with Homebrew gcc)
+//   g++ -O3 -march=native -fopenmp -o solver.exe solver.cpp      (Windows, MSYS2 UCRT64)
 //
 // COMMANDS (run the solver with no arguments for the full list)
 //   solve <pawns> --data <folder>     Solve and save every layer. Safe to stop and restart: it resumes.
 //   verify <pawns> --data <folder>    Recompute every saved position from its successors; report the error.
 //   simulate <pawns> --data <folder>  Play games: perfect vs. perfect, vs. the website's Medium AI, vs. random.
 //   certify <pawns>                   Prove the answer is unique with lower/upper bounds (small games only).
-//   export <pawns> --data <folder> --out <folder>
-//                                     Write the compressed best-move files the website's Grandmaster reads.
-//   check-export <pawns> --data <folder> --out <folder>
-//                                     Check every exported block, and spot-check positions against the solution.
-//   best <pawns> --data <folder>      Print the best move for positions on stdin (used by grandmaster-check.mjs).
+//   best <pawns> --data <folder>      Print the best move and win chance for positions on stdin
+//                                     (used by grandmaster-check.mjs).
 //   benchmark <pawns> <a> <b>         Time sweeps of one layer.
 //   check                             Print legal moves for positions on stdin (used by cross-check.mjs).
 
@@ -46,7 +43,6 @@
 #include <random>
 #include <string>
 #include <vector>
-#include <zlib.h>
 #ifdef __BMI2__
 #include <immintrin.h>
 #endif
@@ -336,89 +332,6 @@ bool readArray(const fs::path& path, T* data, u64 count) {
 }
 
 // =============================================================== the solver
-
-// =============================================================== best-move export (for the website)
-//
-// The website doesn't need win chances, only the best move. For every position (same order as the
-// value tables) the export stores a little-endian u16: bits 3(r-1) .. 3(r-1)+2 hold the index of the best
-// legal move for roll r, with legal moves ordered by starting house (lowest first), as both this solver
-// and senetRules.js list them. It's 0 when there are fewer than two legal moves.
-// Positions are grouped into blocks of 32,768, each zlib-compressed (browsers can decompress zlib natively).
-// The compressed blocks are concatenated into one stream, split into files of equal size (moves-000.bin, ...);
-// index.bin holds each block's starting offset in the stream (u64), plus the stream's total length.
-
-constexpr u64 POSITIONS_PER_BLOCK = 32768;
-constexpr u64 DEFAULT_CHUNK_MB = 256;  // small enough for storage providers' web upload forms
-
-// The k-bit set with the given colexicographic rank (inverse of combinationRank).
-inline u32 combinationUnrank(u64 rank, int k) {
-  u32 set = 0;
-  for (; k >= 1; k--) {
-    int c = k - 1;
-    while (BINOMIAL[c + 1][k] <= rank) c++;
-    set |= 1u << c;
-    rank -= BINOMIAL[c][k];
-  }
-  return set;
-}
-
-std::string chunkName(u64 index) {
-  char name[32];
-  snprintf(name, sizeof name, "moves-%03llu.bin", (unsigned long long)index);
-  return name;
-}
-
-// Writes one continuous byte stream, split across files of `chunkBytes` each.
-struct ChunkedWriter {
-  fs::path folder;
-  u64 chunkBytes;
-  u64 total = 0, inChunk = 0, chunks = 0;
-  FILE* file = nullptr;
-
-  bool write(const unsigned char* data, u64 n) {
-    while (n > 0) {
-      if (!file) {
-        file = fopen((folder / chunkName(chunks)).string().c_str(), "wb");
-        if (!file) return false;
-        chunks++;
-        inChunk = 0;
-      }
-      const u64 take = std::min(chunkBytes - inChunk, n);
-      if (fwrite(data, 1, take, file) != take) return false;
-      data += take;
-      n -= take;
-      inChunk += take;
-      total += take;
-      if (inChunk == chunkBytes) {
-        if (fclose(file) != 0) return false;
-        file = nullptr;
-      }
-    }
-    return true;
-  }
-  bool finish() {
-    const bool ok = !file || fclose(file) == 0;
-    file = nullptr;
-    return ok;
-  }
-};
-
-// Reads bytes [start, end) of the stream written by ChunkedWriter.
-bool readStream(const fs::path& folder, u64 chunkBytes, u64 start, u64 end, std::vector<unsigned char>& out) {
-  out.resize(end - start);
-  for (u64 pos = start; pos < end;) {
-    const u64 chunk = pos / chunkBytes, offset = pos % chunkBytes, take = std::min(end - pos, chunkBytes - offset);
-    FILE* file = fopen((folder / chunkName(chunk)).string().c_str(), "rb");
-    if (!file) return false;
-    const bool ok = fseek(file, (long)offset, SEEK_SET) == 0 && fread(out.data() + (pos - start), 1, take, file) == take;
-    fclose(file);
-    if (!ok) return false;
-    pos += take;
-  }
-  return true;
-}
-
-u32 startingPawns(int pawns, bool evenHouses);
 
 template <typename T>
 struct Layer {
@@ -756,229 +669,6 @@ struct Solver {
       fflush(stdout);
     }
   }
-  // ---------------------------------------------------------- website export
-
-  // The best-move code (see the export notes above) for the player about to roll.
-  u16 bestMoveCode(u32 me, u32 op) {
-    int best[6];
-    evaluate(me, op, best);
-    u16 code = 0;
-    for (int r = 1; r <= 5; r++) code |= (u16)(std::max(best[r], 0) & 7) << (3 * (r - 1));
-    return code;
-  }
-
-  void positionAt(const Layer& layer, u64 p, u32& me, u32& op) const {
-    const u32 mine = combinationUnrank(p / layer.opponentPlacements, layer.mine);
-    const u32 compact = combinationUnrank(p % layer.opponentPlacements, layer.theirs);
-    me = depositBits(mine, SLOT_MASK);
-    op = depositBits(depositBits(compact, ~mine & ALL_SLOTS), SLOT_MASK);
-  }
-
-  // Makes readable the layers that positions in (a,b) lead to: (b,a) after a move or a pass, and
-  // (b,a-1) after bearing off.
-  void useSuccessorLayers(int a, int b) {
-    std::vector<LayerId> needed = {{b, a}};
-    if (a > 1) needed.push_back({b, a - 1});
-    releaseAllExcept(needed);
-    for (auto [x, y] : needed) useSavedLayer(x, y);
-  }
-
-  // Export order: mine = 1..pawns, then theirs = 1..pawns.
-  std::vector<LayerId> exportOrder() const {
-    std::vector<LayerId> order;
-    for (int a = 1; a <= pawns; a++)
-      for (int b = 1; b <= pawns; b++) order.push_back({a, b});
-    return order;
-  }
-
-  bool exportBestMoves(const fs::path& out, u64 chunkBytes) {
-    fs::create_directories(out);
-    for (const auto& entry : fs::directory_iterator(out)) {  // clear out any earlier export
-      const std::string name = entry.path().filename().string();
-      if (name.rfind("moves-", 0) == 0 || name == "index.bin" || name == "manifest.json") fs::remove(entry.path());
-    }
-
-    ChunkedWriter writer{out, chunkBytes};
-    std::vector<u64> offsets = {0};
-    std::string layersJson;
-    const auto start = Clock::now();
-
-    for (auto [a, b] : exportOrder()) {
-      Layer& layer = layerFor(a, b);
-      useSuccessorLayers(a, b);
-      const u64 firstBlock = offsets.size() - 1;
-      const u64 blocks = (layer.size + POSITIONS_PER_BLOCK - 1) / POSITIONS_PER_BLOCK;
-      constexpr u64 BATCH = 2048;  // blocks computed in parallel before writing them in order
-
-      for (u64 b0 = 0; b0 < blocks; b0 += BATCH) {
-        const u64 b1 = std::min(blocks, b0 + BATCH);
-        std::vector<std::vector<unsigned char>> compressed(b1 - b0);
-#pragma omp parallel for schedule(dynamic, 1)
-        for (long long block = (long long)b0; block < (long long)b1; block++) {
-          const u64 p0 = (u64)block * POSITIONS_PER_BLOCK, p1 = std::min(layer.size, p0 + POSITIONS_PER_BLOCK);
-          std::vector<u16> codes(p1 - p0);
-          u64 col = p0 % layer.opponentPlacements;
-          u32 mine = combinationUnrank(p0 / layer.opponentPlacements, a);
-          u32 compact = combinationUnrank(col, b);
-          for (u64 p = p0; p < p1; p++) {
-            const u32 me = depositBits(mine, SLOT_MASK);
-            const u32 op = depositBits(depositBits(compact, ~mine & ALL_SLOTS), SLOT_MASK);
-            codes[p - p0] = bestMoveCode(me, op);
-            if (++col == layer.opponentPlacements) {
-              col = 0;
-              mine = nextCombination(mine);
-              compact = (1u << b) - 1;
-            } else {
-              compact = nextCombination(compact);
-            }
-          }
-          std::vector<unsigned char>& dst = compressed[block - b0];
-          uLongf size = compressBound((uLong)(codes.size() * sizeof(u16)));
-          dst.resize(size);
-          compress2(dst.data(), &size, (const Bytef*)codes.data(), (uLong)(codes.size() * sizeof(u16)), 9);
-          dst.resize(size);
-        }
-        for (const auto& block : compressed) {
-          if (!writer.write(block.data(), block.size())) {
-            fprintf(stderr, "Could not write to %s (is the disk full?)\n", out.string().c_str());
-            return false;
-          }
-          offsets.push_back(writer.total);
-        }
-      }
-
-      char entry[160];
-      snprintf(entry, sizeof entry, "%s    \"%d-%d\": { \"positions\": %llu, \"firstBlock\": %llu }",
-               layersJson.empty() ? "" : ",\n", a, b, (unsigned long long)layer.size, (unsigned long long)firstBlock);
-      layersJson += entry;
-      printf("  layer %d-%d: %13llu positions done; %8.1f MB written so far (%.1f min)\n", a, b,
-             (unsigned long long)layer.size, writer.total / 1e6, secondsSince(start) / 60);
-      fflush(stdout);
-    }
-    if (!writer.finish() || !writeIndex(out / "index.bin", offsets)) return false;
-
-    releaseAllExcept({});
-    useSavedLayer(pawns, pawns);
-    const double firstMover = valueOf(startingPawns(pawns, true), startingPawns(pawns, false));
-
-    std::string chunks;
-    for (u64 i = 0; i < writer.chunks; i++) chunks += (i ? ", \"" : "\"") + chunkName(i) + "\"";
-    FILE* manifest = fopen((out / "manifest.json").string().c_str(), "w");
-    if (!manifest) return false;
-    fprintf(manifest,
-            "{\n"
-            "  \"format\": \"senet-best-moves-v1\",\n"
-            "  \"pawnsPerSide\": %d,\n"
-            "  \"positionsPerBlock\": %llu,\n"
-            "  \"chunkBytes\": %llu,\n"
-            "  \"totalBytes\": %llu,\n"
-            "  \"totalBlocks\": %llu,\n"
-            "  \"firstMoverWinChance\": %.6f,\n"
-            "  \"storage\": \"%s\",\n"
-            "  \"indexFile\": \"index.bin\",\n"
-            "  \"chunkFiles\": [%s],\n"
-            "  \"layers\": {\n%s\n  }\n"
-            "}\n",
-            pawns, (unsigned long long)POSITIONS_PER_BLOCK, (unsigned long long)chunkBytes,
-            (unsigned long long)writer.total, (unsigned long long)(offsets.size() - 1), firstMover, S::NAME,
-            chunks.c_str(), layersJson.c_str());
-    fclose(manifest);
-
-    printf("Export finished in %.1f minutes: %.2f GB in %llu files of up to %llu MB, plus index.bin and manifest.json.\n",
-           secondsSince(start) / 60, writer.total / 1e9, (unsigned long long)writer.chunks,
-           (unsigned long long)(chunkBytes >> 20));
-    return true;
-  }
-
-  static bool writeIndex(const fs::path& path, const std::vector<u64>& offsets) {
-    FILE* file = fopen(path.string().c_str(), "wb");
-    if (!file) return false;
-    const bool ok = fwrite(offsets.data(), sizeof(u64), offsets.size(), file) == offsets.size();
-    return fclose(file) == 0 && ok;
-  }
-
-  // Checks an export: every block must decompress to the right size, and sampled positions in every layer
-  // must match best moves recomputed from the solution. Returns the number of problems found.
-  long checkExport(const fs::path& out, int samplesPerLayer, std::mt19937_64& rng) {
-    std::vector<u64> offsets;
-    {
-      std::error_code error;
-      const u64 bytes = fs::file_size(out / "index.bin", error);
-      FILE* file = fopen((out / "index.bin").string().c_str(), "rb");
-      if (error || !file) {
-        fprintf(stderr, "Missing %s\n", (out / "index.bin").string().c_str());
-        return 1;
-      }
-      offsets.resize(bytes / sizeof(u64));
-      const bool ok = fread(offsets.data(), sizeof(u64), offsets.size(), file) == offsets.size();
-      fclose(file);
-      if (!ok) return 1;
-    }
-    std::error_code error;
-    u64 chunkBytes = fs::file_size(out / chunkName(0), error);
-    if (!fs::exists(out / chunkName(1))) chunkBytes = ~0ull >> 1;  // only one file
-    u64 fileBytes = 0;
-    for (u64 i = 0; fs::exists(out / chunkName(i)); i++) fileBytes += fs::file_size(out / chunkName(i));
-
-    long problems = 0;
-    if (fileBytes != offsets.back()) {
-      printf("  files hold %llu bytes, but the index expects %llu\n", (unsigned long long)fileBytes,
-             (unsigned long long)offsets.back());
-      problems++;
-    }
-
-    auto loadBlock = [&](u64 block, std::vector<u16>& codes, u64 expectedPositions) {
-      std::vector<unsigned char> raw;
-      if (!readStream(out, chunkBytes, offsets[block], offsets[block + 1], raw)) return false;
-      codes.assign(expectedPositions, 0);
-      uLongf size = (uLongf)(expectedPositions * sizeof(u16));
-      return uncompress((Bytef*)codes.data(), &size, raw.data(), (uLong)raw.size()) == Z_OK &&
-             size == expectedPositions * sizeof(u16);
-    };
-
-    u64 block = 0;
-    for (auto [a, b] : exportOrder()) {
-      Layer& layer = layerFor(a, b);
-      useSuccessorLayers(a, b);
-      const u64 blocks = (layer.size + POSITIONS_PER_BLOCK - 1) / POSITIONS_PER_BLOCK;
-      const u64 firstBlock = block;
-      long layerProblems = 0;
-
-      // Every block must decompress.
-      long badBlocks = 0;
-#pragma omp parallel for schedule(dynamic, 64) reduction(+ : badBlocks)
-      for (long long i = 0; i < (long long)blocks; i++) {
-        std::vector<u16> codes;
-        const u64 positions = std::min(POSITIONS_PER_BLOCK, layer.size - (u64)i * POSITIONS_PER_BLOCK);
-        if (!loadBlock(firstBlock + i, codes, positions)) badBlocks++;
-      }
-      layerProblems += badBlocks;
-
-      // Sampled positions (always including the first and last) must match a fresh calculation.
-      std::vector<u16> codes;
-      for (int s = 0; s < samplesPerLayer; s++) {
-        const u64 p = s == 0 ? 0 : s == 1 ? layer.size - 1 : rng() % layer.size;
-        const u64 inLayerBlock = p / POSITIONS_PER_BLOCK;
-        const u64 positions = std::min(POSITIONS_PER_BLOCK, layer.size - inLayerBlock * POSITIONS_PER_BLOCK);
-        u32 me, op;
-        positionAt(layer, p, me, op);
-        if (!loadBlock(firstBlock + inLayerBlock, codes, positions) ||
-            codes[p % POSITIONS_PER_BLOCK] != bestMoveCode(me, op))
-          layerProblems++;
-      }
-      printf("  layer %d-%d: %llu blocks decompress%s; %d sampled positions: %s\n", a, b, (unsigned long long)blocks,
-             badBlocks ? " WITH ERRORS" : " fine", samplesPerLayer, layerProblems ? "PROBLEMS FOUND" : "all match");
-      fflush(stdout);
-      problems += layerProblems;
-      block += blocks;
-    }
-    if (block + 1 != offsets.size()) {
-      printf("  the index has %llu blocks, but %llu were expected\n", (unsigned long long)(offsets.size() - 1),
-             (unsigned long long)block);
-      problems++;
-    }
-    return problems;
-  }
 };
 
 // =============================================================== simulation
@@ -1074,12 +764,8 @@ void usage() {
       "  solver certify <pawns> [tolerance units, default 1] [--data <folder>]\n"
       "      Prove the solution is unique with 32-bit lower/upper bounds (in memory; small games only).\n"
       "      With --data, also checks how far a saved solution is from the proven bounds.\n"
-      "  solver export <pawns> --data <folder> --out <folder> [--chunk-mb <n>]\n"
-      "      Write the compressed best-move files the website's Grandmaster reads (files of up to 256 MB).\n"
-      "  solver check-export <pawns> --data <folder> --out <folder> [--samples <n>]\n"
-      "      Check that every exported block is readable and that sampled positions match the solution.\n"
       "  solver best <pawns> --data <folder>\n"
-      "      Print the best move for '<me mask> <op mask> <roll>' lines on standard input.\n"
+      "      For '<me mask> <op mask> <roll>' lines on standard input, print the best move and win chance.\n"
       "  solver benchmark <pawns> <a> <b> [sweeps]\n"
       "      Time sweeps of one layer (neighbors filled with placeholder values).\n"
       "  solver check\n"
@@ -1093,9 +779,6 @@ struct Options {
   double checkpointMinutes = 20;
   int games = 100000;
   u64 seed = 12345;
-  fs::path out;
-  u64 chunkMegabytes = DEFAULT_CHUNK_MB;
-  int samples = 2000;
   std::vector<std::string> positional;
   int threads = 1;
 };
@@ -1151,28 +834,9 @@ int run(const std::string& command, const Options& opt) {
     return 0;
   }
 
-  if (command == "export" || command == "check-export") {
-    if (opt.data.empty() || opt.out.empty()) {
-      fprintf(stderr, "Please give both --data <solved folder> and --out <export folder>\n");
-      return 1;
-    }
-    if (command == "export") {
-      printf("Exporting best moves for %d-pawn Senet (%llu positions) to %s\n", pawns, (unsigned long long)positions,
-             opt.out.string().c_str());
-      fflush(stdout);
-      return solver.exportBestMoves(opt.out, opt.chunkMegabytes << 20) ? 0 : 1;
-    }
-    printf("Checking the export in %s\n", opt.out.string().c_str());
-    std::mt19937_64 rng(opt.seed);
-    const long problems = solver.checkExport(opt.out, opt.samples, rng);
-    printf(problems ? "Found %ld problem(s). Please don't upload this export.\n"
-                    : "Everything checks out (%ld problems). Ready to upload.\n",
-           problems);
-    return problems ? 1 : 0;
-  }
-
   if (command == "best") {
-    // Input lines: "<me mask> <op mask> <roll>". Output: "<move index> <starting house>", or "-1 0" if no move.
+    // Input lines: "<me mask> <op mask> <roll>", from the point of view of the player about to roll.
+    // Output: "<move index> <starting house> <stored win chance>"; "-1 0 ..." when there's no legal move.
     if (opt.data.empty()) {
       fprintf(stderr, "Please give a folder for the saved layers with --data <folder>\n");
       return 1;
@@ -1185,7 +849,7 @@ int run(const std::string& command, const Options& opt) {
       int best[6];
       solver.evaluate(me, op, best);
       legalMoves(me, op, roll, moves);
-      printf("%d %d\n", best[roll], best[roll] >= 0 ? moves[best[roll]].from : 0);
+      printf("%d %d %.9g\n", best[roll], best[roll] >= 0 ? moves[best[roll]].from : 0, (double)*solver.slotFor(me, op));
     }
     return 0;
   }
@@ -1291,9 +955,6 @@ int main(int argc, char** argv) {
     else if (arg == "--checkpoint-minutes" && i + 1 < argc) opt.checkpointMinutes = atof(argv[++i]);
     else if (arg == "--games" && i + 1 < argc) opt.games = atoi(argv[++i]);
     else if (arg == "--seed" && i + 1 < argc) opt.seed = strtoull(argv[++i], nullptr, 10);
-    else if (arg == "--out" && i + 1 < argc) opt.out = argv[++i];
-    else if (arg == "--chunk-mb" && i + 1 < argc) opt.chunkMegabytes = std::clamp(strtoull(argv[++i], nullptr, 10), 1ull, 1024ull);
-    else if (arg == "--samples" && i + 1 < argc) opt.samples = std::max(2, atoi(argv[++i]));
     else if (arg == "--precise") precise = true;
     else opt.positional.push_back(arg);
   }

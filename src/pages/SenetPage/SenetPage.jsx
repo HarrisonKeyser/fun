@@ -35,7 +35,7 @@ const SOUND_FOR_EVENT = {
 };
 const NO_MOVES_SOUND_DELAY_MS = 350; // let the sticks land before the "no moves" thud
 
-// Grandmaster only appears once its move book is hosted (see grandmaster.js).
+// Grandmaster only appears once the solution is hosted (see grandmaster.js).
 const grandmaster = GRANDMASTER_DATA_URL ? createGrandmaster(GRANDMASTER_DATA_URL) : null;
 
 function wait(ms) {
@@ -88,8 +88,6 @@ export default function SenetPage() {
     const isGrandmaster = opponent === OPPONENTS.COMPUTER_GRANDMASTER && grandmaster;
 
     if (!roll) {
-      // Grandmaster's lookup doesn't depend on the roll, so start it while the sticks are thrown.
-      if (isGrandmaster) grandmaster.prepare(board, computerColor);
       const timer = setTimeout(
         () => dispatch({ type: ACTIONS.ROLL, roll: throwSticks() }),
         COMPUTER_ROLL_DELAY_MS,
@@ -103,11 +101,11 @@ export default function SenetPage() {
         ? grandmaster
             .chooseMove(board, computerColor, roll.value)
             .then((move) => {
-              if (legalMoves.length > 1) setGrandmasterOffline(false); // the move book answered
+              if (legalMoves.length > 1) setGrandmasterOffline(false); // the solution answered
               return move ?? medium();
             })
             .catch((error) => {
-              console.warn('Grandmaster could not load its move book:', error);
+              console.warn('Grandmaster could not reach the solution:', error);
               setGrandmasterOffline(true);
               return medium();
             })
@@ -186,7 +184,7 @@ export default function SenetPage() {
       {opponent === OPPONENTS.COMPUTER_GRANDMASTER && (
         <p className={styles.opponentNote}>
           {grandmasterOffline
-            ? "Grandmaster couldn't load its move book, so it's playing like Medium for now."
+            ? "Grandmaster can't reach its solution right now, so it's playing like Medium until it can."
             : 'Grandmaster plays every move perfectly, using a complete solution of all 8.5 billion positions. Luck still matters, so it can be beaten!'}
         </p>
       )}
