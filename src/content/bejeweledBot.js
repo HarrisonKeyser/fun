@@ -73,7 +73,7 @@ export const BEJEWELED_BOT = {
     ],
     explainer: [
       'The Cronus Zen is what lets an unmodified Xbox take orders from a computer. It plugs straight into the Xbox and presents itself as a standard Xbox controller, so the console accepts its inputs like any other controller’s. It also translates keyboard input into gamepad input: the arrow keys become the D-pad, and Space becomes the A button.',
-      'The catch is that the Zen only accepts two kinds of input: moves preprogrammed onto the Zen itself, or a keyboard plugged into it. It can’t take commands from a Python program directly. That’s why the Raspberry Pi Zero 2W is there. It’s the Python-to-Zen translator: the laptop sends it each move over Wi-Fi, and the Pi, plugged into the Zen and posing as a USB keyboard, types the matching keys.',
+      'The catch is that the Zen only accepts two kinds of input: static moves preprogrammed onto the Zen itself, or a keyboard plugged into it. It can’t take commands from a Python program directly. That’s why the Raspberry Pi Zero 2W is there. It’s the Python-to-Zen translator: the laptop sends it each move over Wi-Fi, and the Pi, plugged into the Zen and posing as a USB keyboard, types the matching keys.',
     ],
     loopNote: 'The Zen is plugged into the Xbox, so the loop is closed: the bot sees the result of its move and goes again.',
   },
@@ -118,7 +118,7 @@ export const BEJEWELED_BOT = {
       },
       {
         title: 'Power gems that doubt themselves',
-        text: 'The bot was taught to ignore gems it wasn’t confident about, as a safety net against misreading the board. Power gems pulse, which drags down that confidence. That worked until the bot hit a board where the only legal move involved a low-confidence power gem, and it froze. That forced me to tackle the problem head-on with new parameters and checks. The main one: a power gem’s center stays a bright, saturated version of its color even while it pulses, so a strong center now restores full confidence.',
+        text: 'The bot was taught to ignore gems it wasn’t confident about, as a safety net against misreading the board. Power gems pulse, which drags down that confidence. That worked until the bot hit a board where the only legal move involved a low-confidence power gem, and it froze. That forced me to tackle the problem head-on and upgrade the vision with new parameters and checks. The main one: a power gem’s center stays a bright, saturated version of its color even while it pulses, so a strong center now restores full confidence.',
       },
       {
         title: 'Button timing',
