@@ -37,7 +37,7 @@ export const BEJEWELED_BOT = {
 
   demo: {
     heading: 'Watch it think',
-    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot read the board from video; this one gets it straight from the page.',
+    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Note that "scoring" here isn't the resulting in-game score of the move; it's a separate scoring system the program uses to determine the best long-term move. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot reads the board from video; this one gets it straight from the page.',
   },
 
   breakdown: {
@@ -66,10 +66,10 @@ export const BEJEWELED_BOT = {
     heading: 'How it works',
     steps: [
       { name: 'Xbox 360', detail: 'Runs the unmodified game' },
-      { name: 'Capture card', detail: 'Sends the picture to a laptop, about 3 seconds late' },
-      { name: 'Laptop', detail: 'Python and OpenCV read the board and choose a move' },
-      { name: 'Raspberry Pi Zero 2W', detail: 'The translator: gets each move over Wi-Fi and types it as keyboard presses' },
-      { name: 'Cronus Zen', detail: 'Poses as a standard Xbox controller and turns keys into D-pad and A presses' },
+      { name: 'Capture card', detail: 'Sends the live game footage to a laptop, with about a 3-second delay due to 2012 capture card hardware' },
+      { name: 'Laptop', detail: 'Python and OpenCV screenshots the footage, reads the board, and chooses a move' },
+      { name: 'Raspberry Pi Zero 2W', detail: 'Receives each move over Wi-Fi from the Laptop program, and simulates typing keyboard presses for the Zen' },
+      { name: 'Cronus Zen', detail: 'Plugged into the Xbox, poses as a standard Xbox controller and translates the keyboard presses into D-pad and A presses' },
     ],
     explainer: [
       'The Cronus Zen is what lets an unmodified Xbox take orders from a computer. It plugs straight into the Xbox and presents itself as a standard Xbox controller, so the console accepts its inputs like any other controller’s. It also translates keyboard input into gamepad input: the arrow keys become the D-pad, and Space becomes the A button.',
