@@ -37,7 +37,7 @@ export const BEJEWELED_BOT = {
 
   demo: {
     heading: 'Watch it think',
-    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Note that “scoring” here isn’t the resulting in-game score of the move; it’s a separate scoring system the program uses to determine the best long-term move. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot reads the board from video; this one gets it straight from the page.',
+    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Note that “scoring” here isn’t the resulting in-game score of the move; it’s a separate scoring system the program uses to determine the most promising move. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot reads the board from video; this one gets it straight from the page.',
   },
 
   breakdown: {
