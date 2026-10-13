@@ -34,7 +34,7 @@ Harrison Keyser's personal site, **harrisonkeyser.fun**: games, statistics expla
 ## Senet (the biggest page)
 
 - Rules: `src/pages/SenetPage/senetRules.js` (tested). The C++ solver in `tools/senet-solver` mirrors them; `cross-check.mjs` keeps the two in sync.
-- The game is fully solved (8.56 billion positions; first mover wins 52.2515% with perfect play). The 17 GB solution lives in Cloudflare R2 (bucket `senet`) and is served by the Worker in `tools/senet-data-worker` at `https://senet-data.harrisonkeyser333.workers.dev` (`/health` checks the upload). The Grandmaster opponent and the game review read it through `grandmaster.js`.
+- The game is fully solved (8.56 billion positions; first mover wins 52.2515% with perfect play). The 17 GB solution lives in Cloudflare R2 (bucket `senet`) and is served by the Worker in `tools/senet-data-worker` at `https://senet-data.harrisonkeyser333.workers.dev` (`/health` checks the upload). Keep it on the Workers Free plan with at most one R2 read per request, so the bill can't grow (see its README). The Grandmaster opponent and the game review read it through `grandmaster.js`.
 - The domain's DNS stays at Namecheap on purpose: it handles his email forwarding.
 
 ## Bejeweled Bot

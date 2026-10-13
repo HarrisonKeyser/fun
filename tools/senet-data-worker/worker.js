@@ -40,36 +40,24 @@ function binomial(n, k) {
 }
 const expectedBytes = (mine, theirs) => binomial(29, mine) * binomial(29 - mine, theirs) * 2;
 
-// The page at /health: confirms the upload is complete, e.g. "senet5: 25 of 25 files, all the right size".
-async function healthReport(bucket) {
-  const sizes = new Map();
-  let cursor;
-  do {
-    const listed = await bucket.list({ cursor });
-    for (const object of listed.objects) if (FILE_NAME.test(object.key)) sizes.set(object.key, object.size);
-    cursor = listed.truncated ? listed.cursor : undefined;
-  } while (cursor);
+/*
+  The page at /health: confirms the Worker can reach the bucket, e.g.
+  "senet5-layer-5-5.u16 is in the bucket and the right size (10.10 GB). Ready!"
 
-  const games = [...new Set([...sizes.keys()].map((key) => Number(key[5])))].sort();
-  if (games.length === 0) return 'The Worker is running, but no solution files were found in the bucket.';
-  return games
-    .map((pawns) => {
-      const problems = [];
-      let bytes = 0;
-      for (let mine = 1; mine <= pawns; mine += 1) {
-        for (let theirs = 1; theirs <= pawns; theirs += 1) {
-          const key = `senet${pawns}-layer-${mine}-${theirs}.u16`;
-          if (!sizes.has(key)) problems.push(`${key} is missing`);
-          else if (sizes.get(key) !== expectedBytes(mine, theirs)) problems.push(`${key} is the wrong size`);
-          else bytes += sizes.get(key);
-        }
-      }
-      const files = pawns * pawns;
-      return problems.length
-        ? `senet${pawns}: PROBLEMS: ${problems.join('; ')}`
-        : `senet${pawns}: ${files} of ${files} files, all the right size (${(bytes / 1e9).toFixed(2)} GB). Ready!`;
-    })
-    .join('\n');
+  Cost rule: every request makes at most ONE R2 read, the cheap kind (R2 "Class B").
+  On the Workers Free plan (100,000 requests a day, then Cloudflare refuses requests without
+  charging) that caps reads at about 3.1 million a month, under R2's free 10 million.
+  So don't add bucket.list() or a loop of reads here: listing is the expensive kind ("Class A").
+  To check all 25 files, use `rclone check` (README.md) or the bucket page in the dashboard.
+*/
+const HEALTH_FILE = 'senet5-layer-5-5.u16';
+
+async function healthReport(bucket) {
+  const object = await bucket.head(HEALTH_FILE);
+  if (!object) return `The Worker is running, but ${HEALTH_FILE} was not found in the bucket.`;
+  const expected = expectedBytes(5, 5);
+  if (object.size !== expected) return `PROBLEM: ${HEALTH_FILE} is ${object.size} bytes; it should be ${expected}.`;
+  return `${HEALTH_FILE} is in the bucket and the right size (${(object.size / 1e9).toFixed(2)} GB). Ready!`;
 }
 
 function reply(status, text, headers) {
@@ -94,7 +82,8 @@ export default {
     if (request.method !== 'GET') return reply(405, 'Only GET is supported', cors);
 
     const name = new URL(request.url).pathname.slice(1);
-    if (name === '' || name === 'health') return reply(200, await healthReport(env.BUCKET), cors);
+    if (name === '') return reply(200, 'Senet solution server. See /health.', cors);
+    if (name === 'health') return reply(200, await healthReport(env.BUCKET), cors);
     if (!FILE_NAME.test(name)) return reply(404, 'Not found', cors);
 
     const range = /^bytes=(\d+)-(\d+)$/.exec(request.headers.get('Range') ?? '');
