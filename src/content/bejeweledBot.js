@@ -37,7 +37,7 @@ export const BEJEWELED_BOT = {
 
   demo: {
     heading: 'Watch it think',
-    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Note that "scoring" here isn't the resulting in-game score of the move; it's a separate scoring system the program uses to determine the best long-term move. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot reads the board from video; this one gets it straight from the page.',
+    text: 'This is the bot’s actual move-choosing logic, running in your browser. For every possible swap, it simulates the result, including chain reactions, and scores it. The scoring is a bit crude, but I didn’t need something perfect. I just needed something “good enough,” which the scoring system certainly is. Note that “scoring” here isn’t the resulting in-game score of the move; it’s a separate scoring system the program uses to determine the best long-term move. Press Play to let it go, step through one move at a time, or swap gems yourself. The real bot reads the board from video; this one gets it straight from the page.',
   },
 
   breakdown: {
@@ -67,7 +67,7 @@ export const BEJEWELED_BOT = {
     steps: [
       { name: 'Xbox 360', detail: 'Runs the unmodified game' },
       { name: 'Capture card', detail: 'Sends the live game footage to a laptop, with about a 3-second delay due to 2012 capture card hardware' },
-      { name: 'Laptop', detail: 'Python and OpenCV screenshots the footage, reads the board, and chooses a move' },
+      { name: 'Laptop', detail: 'Python and OpenCV screenshot the footage, reads the board, and chooses a move' },
       { name: 'Raspberry Pi Zero 2W', detail: 'Receives each move over Wi-Fi from the Laptop program, and simulates typing keyboard presses for the Zen' },
       { name: 'Cronus Zen', detail: 'Plugged into the Xbox, poses as a standard Xbox controller and translates the keyboard presses into D-pad and A presses' },
     ],
