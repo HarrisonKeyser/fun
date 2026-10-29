@@ -27,6 +27,11 @@ export const HOME_SECTIONS = [
         image: '/images/thumbnails/bejeweled-bot.webp',
       },
       {
+        title: 'Clone Hero Auto-Charter',
+        path: ROUTE_PATHS.cloneHeroAutochart,
+        image: '/images/thumbnails/clone-hero-autochart.webp',
+      },
+      {
         title: 'Bank Bonuses',
         path: ROUTE_PATHS.bankBonuses,
         image: '/images/thumbnails/bank-bonuses.webp',
