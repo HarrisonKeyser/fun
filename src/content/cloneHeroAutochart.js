@@ -21,7 +21,7 @@ export const AUTOCHART = {
 
   download: {
     label: 'Download for Windows',
-    details: 'Windows 10 or 11 (64-bit). Free. Everything runs on your own computer; songs are never uploaded.',
+    details: 'Windows 10 or 11 (64-bit), about a 280 MB download. Free. Everything runs on your own computer; songs are never uploaded.',
     smartscreen:
       'Windows may say “Windows protected your PC” because the installer isn’t code-signed. Click More info, then Run anyway. It installs just for you, with no admin prompt, and can be removed from Settings → Apps.',
     allVersions: 'All versions and release notes',
