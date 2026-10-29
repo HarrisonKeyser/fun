@@ -8,6 +8,7 @@ import ClickPage from './pages/ClickPage/ClickPage.jsx';
 import SenetPage from './pages/SenetPage/SenetPage.jsx';
 import BankBonusesPage from './pages/BankBonusesPage/BankBonusesPage.jsx';
 import BejeweledPage from './pages/BejeweledPage/BejeweledPage.jsx';
+import AutochartPage from './pages/AutochartPage/AutochartPage.jsx';
 import CaseStudyPage from './pages/CaseStudyPage/CaseStudyPage.jsx';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage.jsx';
 
@@ -21,6 +22,7 @@ export default function App() {
         <Route path={ROUTE_PATHS.senet} element={<SenetPage />} />
         <Route path={ROUTE_PATHS.bankBonuses} element={<BankBonusesPage />} />
         <Route path={ROUTE_PATHS.bejeweledBot} element={<BejeweledPage />} />
+        <Route path={ROUTE_PATHS.cloneHeroAutochart} element={<AutochartPage />} />
 
         {CASE_STUDIES.map((caseStudy) => (
           <Route
