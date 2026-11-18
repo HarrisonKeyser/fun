@@ -9,6 +9,7 @@ export const ROUTE_PATHS = {
   senet: '/senet',
   bankBonuses: '/bank-bonuses',
   bejeweledBot: '/bejeweled-bot',
+  cloneHeroAutochart: '/clone-hero-autochart',
   yahtzee: '/yahtzee',
   universityRetention: '/university-retention',
   flightSafety: '/flight-safety',
